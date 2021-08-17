@@ -1,0 +1,185 @@
+description: Few-shot-Classification-deberta
+
+target:
+  # which virtual cluster you belong to (msrlabs, etc.). Everyone has access to "msrlabs".
+  service: amlk8s
+  name: itplabrr1cl1
+  vc: resrchvc
+  # physical cluster to use (cam, gcr, rr1, rr2) or Azure clusters (eu1, eu2, etc.)
+  # eu1(p100) eu2(p40), rr1 (v100) sc1(v100) sc3(v100)
+  #cluster: rr1
+
+storage:
+  my_storage:
+    storage_account_name: yaqing
+    container_name: phillytools
+
+environment:
+  image: yaqing/pytorch-few-shot:v0.6
+  #image: pytorch/pytorch:1.5-cuda10.1-cudnn7-devel
+#  registry: phillyregistry.azurecr.io
+#  setup:
+#    - pip install torch torchvision --user
+#    - pip install transformers --user
+#    - pip install seqeval --user
+#    - pip install flashtool --user
+
+code:
+  # local directory of the code. this will be uploaded to the server.
+  # $CONFIG_DIR is expanded to the directory of this config file
+  local_dir: ../src
+
+data:
+   remote_dir: few_shot_glue
+   local_dir: ../data
+
+
+search:
+    job_template:
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_{prompt_encoder_type}_seed_{SEED}_{MBS}_{GS}_{TYPE}_{un_train_batch_size}_{MAX_STEP}_{LR}_{prompt_length}
+        sku: 24G1
+        command:
+          - python run.py
+            --task_name {TASK}
+            --data_dir $$PT_DATA_DIR/k-shot/{TASK}/{K}-{SEED}
+            --output_dir $$PT_OUTPUT_DIR/
+            --overwrite_output_dir
+            --do_train
+            --overwrite_cache
+            --do_eval
+            --do_predict
+            --model_name_or_path {MODEL}
+            --few_shot_type {TYPE}
+            --num_k {K}
+            --max_seq_length {max_seq_length}
+            --per_device_train_batch_size {BS}
+            --per_device_eval_batch_size 16
+            --gradient_accumulation_steps {GS}
+            --learning_rate {LR}
+            --max_steps {MAX_STEP}
+            --logging_steps {EVAL_STEP}
+            --eval_steps {EVAL_STEP}
+            --num_train_epochs {num_train_epochs}
+            --seed {SEED}
+            --contrast_training {CT}
+            --template {TEMPLATE}
+            --psuedo_selection_opt {OPT}
+            --soft_label {SOFT_LABEL}
+            --is_semi {SEMI}
+            --adv_opt {ADV}
+            --hybrid {hybrid}
+            --continuous_prompt {continuous_prompt}
+            --un_train_batch_size {un_train_batch_size}
+            --self_training_start_iter {self_training_start_iter}
+            --sampling_steps {sampling_steps}
+            --meta_train_batch_size {MBS}
+            --update_teacher_steps {update_teacher_steps}
+            --prompt_encoder_type {prompt_encoder_type}
+            --prompt_length {prompt_length}
+            --demo_condon_steps {demo_condon_steps}
+            --prompt_learning_rate {prompt_LR}
+    type: grid
+    max_trials: 1000
+    params:
+      - name: TASK
+        spec: discrete
+        values: ['MNLI']
+      - name: MODEL
+        spec: discrete
+        values: ['roberta-base', 'roberta-large', 'microsoft/deberta-large']
+      - name: TYPE
+        spec: discrete
+        values: ['prompt', 'prompt-demo']
+      - name: BS
+        spec: discrete
+        values: [4]
+      - name: MBS
+        spec: discrete
+        values: [4]
+      - name: GS
+        spec: discrete
+        values: [1]
+      - name: max_seq_length
+        spec: discrete
+        values: [300]
+      - name: K
+        spec: discrete
+        values: [20]
+      - name: LR
+        spec: discrete
+        values: [1e-5] #1e-2, 1e-3]
+      - name: MAX_STEP
+        spec: discrete
+        values: [4000]
+      - name: num_train_epochs
+        spec: discrete
+        values: [100]
+      - name: EVAL_STEP
+        spec: discrete
+        values: [200]
+      - name: SEED
+        spec: discrete
+        values: [100] #, 13, 21, 42, 87]
+      - name: CT
+        spec: discrete
+        values: [0]
+      - name: OPT
+        spec: discrete
+        values: ['none']
+      - name: SOFT_LABEL
+        spec: discrete
+        values: [0]
+      - name: SEMI
+        spec: discrete
+        values: [0]
+      - name: ADV
+        spec: discrete
+        values: [0]
+      - name: hybrid
+        spec: discrete
+        values: [0]
+      - name: TEMPLATE
+        spec: discrete
+        values: ['*cls**sent-_0*?*mask*,*+sentl_1**sep+*']
+      - name: continuous_prompt
+        spec: discrete
+        values: [0] #, 1]
+      - name: un_train_batch_size
+        spec: discrete
+        values: [4]
+      - name: self_training_start_iter
+        spec: discrete
+        values: [10000]
+      - name: sampling_steps
+        spec: discrete
+        values: [1]
+      - name: update_teacher_steps
+        spec: discrete
+        values: [3000]
+      - name: prompt_encoder_type
+        spec: discrete
+        values: ['None']
+      - name: prompt_length
+        spec: discrete
+        values: [80]
+      - name: demo_condon_steps
+        spec: discrete
+        values: [0]
+      - name: prompt_LR
+        spec: discrete
+        values: [1e-3] #, 1e-4]
+
+
+
+#      - name: MAPPING
+#        spec: discrete
+#        values: ["'{''contradiction'':''No'',''entailment'':''Yes'',''neutral'':''Maybe'''}"]
+#      - name: TASK_EXTRA
+#        spec: discrete
+#        values: ["--max_seq_len 256 --num_sample 1"]
+
+
+
+
+
+
