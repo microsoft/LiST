@@ -130,7 +130,7 @@ torch==1.6.0
 tqdm==4.48.2
 transformers @ git+https://github.com/huggingface/transformers@f4a0d6ff867e8a82a33d7a653e7d45372a463271
 typing-extensions==3.7.4.3
-urllib3==1.25.11
+urllib3==1.26.5
 wcwidth==0.2.5
 websocket-client==1.0.0
 Werkzeug==1.0.1
