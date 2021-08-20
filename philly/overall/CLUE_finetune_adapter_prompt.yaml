@@ -83,12 +83,13 @@ search:
             --adapter_dim {adapter_dim}
             --adapter_choice {adapter_choice}
             --adapter_init_std {adapter_init_std}
+            --weight_decay {weight_decay}
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['MNLI'] #, 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2']
+        values: ['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2']
       - name: MODEL
         spec: discrete
         values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
@@ -109,13 +110,13 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [ 30] #, 20, 30]
+        values: [100] #, 20, 30]
       - name: LR
         spec: discrete
-        values: [5e-5] #1e-2, 1e-3]
+        values: [5e-6] #1e-2, 1e-3]
       - name: num_train_epochs
         spec: discrete
-        values: [50] #[400]
+        values: [400] #[400]
       - name: EVAL_STEP
         spec: discrete
         values: [50]
@@ -173,6 +174,9 @@ search:
       - name: adapter_init_std
         spec: discrete
         values: [0.0002]
+      - name: weight_decay
+        spec: discrete
+        values: [ 0.1 ]
 
 
 

@@ -86,13 +86,13 @@ search:
     params:
       - name: TASK
         spec: discrete
-        values: ['QQP', 'RTE', 'subj', 'mpqa', 'MNLI', 'SST-2']
+        values: ['QQP', 'RTE', 'MNLI'] #,'subj', 'mpqa', 'MNLI', 'SST-2']
       - name: MODEL
         spec: discrete
         values: ['bert-base-uncased', 'bert-large-uncased', 'roberta-base', 'roberta-large'] # 'microsoft/deberta-base', 'microsoft/deberta-large' ]['t5-small', 't5-base', 't5-large'] #, 'bert-base-uncased', 'bert-large-uncased', 'roberta-base', 'roberta-large'] # 'microsoft/deberta-base', 'microsoft/deberta-large']
       - name: TYPE
         spec: discrete
-        values: ['finetune'] #['prompt']
+        values: ['prompt'] #['prompt']
       - name: BS
         spec: discrete
         values: [4]
@@ -107,10 +107,10 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [10, 20, 30] #[10, 20, 30] #][10, 20, 30]
+        values: [100] #[10, 20, 30] #[10, 20, 30] #][10, 20, 30]
       - name: LR
         spec: discrete
-        values: [1e-4] #[5e-6] #1e-2, 1e-3]
+        values: [5e-6] #[5e-6] #1e-2, 1e-3]
       - name: num_train_epochs
         spec: discrete
         values: [50]

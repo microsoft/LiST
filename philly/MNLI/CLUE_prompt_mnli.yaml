@@ -90,13 +90,13 @@ search:
         values: ['MNLI']
       - name: MODEL
         spec: discrete
-        values: [ 'bert-base-uncased'] #, 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
+        values: [ 'roberta-large'] #, 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
       - name: TYPE
         spec: discrete
         values: ['prompt']
       - name: BS
         spec: discrete
-        values: [4]
+        values: [8]
       - name: MBS
         spec: discrete
         values: [4]
@@ -108,7 +108,7 @@ search:
         values: [256]
       - name: K
         spec: discrete
-        values: [10] #, 20, 30]
+        values: [100] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]

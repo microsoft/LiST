@@ -91,12 +91,13 @@ search:
             --meta_st_warmup {meta_st_warmup}
             --semi_learning_rate {Semi_LR}
             --semi_warmup_ratio {semi_warmup_ratio}
+            --semi_weight_decay {semi_weight_decay}
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['QQP', 'RTE', 'subj', 'mpqa', 'MNLI', 'SST-2']
+        values: ['QQP', 'RTE', 'MNLI'] #['QQP', 'RTE', 'subj', 'mpqa', 'MNLI', 'SST-2']
       - name: MODEL
         spec: discrete
         values: [ 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
@@ -117,7 +118,7 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [30] #, 20, 30]
+        values: [100] #[30] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]
@@ -199,6 +200,9 @@ search:
       - name: semi_warmup_ratio
         spec: discrete
         values: [0]
+      - name: semi_weight_decay
+        spec: discrete
+        values: [0.1]
 
 
 

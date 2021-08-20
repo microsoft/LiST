@@ -131,8 +131,8 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
         self.prompt_embeddings = torch.nn.Embedding(self.data_args.prompt_length, self.hidden_size)
 
-        # if self.model_args.adapter_choice != 'none':
-        #     self.init_adapter(std=self.model_args.adapter_init_std)
+        if self.model_args.adapter_choice != 'none':
+            self.init_adapter(std=self.model_args.adapter_init_std)
 
 
 
@@ -161,8 +161,19 @@ class LMForPromptFinetuning(BertPreTrainedModel):
     def init_adapter(self, std):
         with torch.no_grad():
             for name, param in self.lm_model.named_parameters():
-                if self.model_args.adapter_choice != 'lora':
-                    pass
+                init_value = 0
+                if 'adapter_proj' in name:
+
+                    if self.model_args.adapter_choice == 'simple':
+
+                        init_value = torch.eye(param.size(0))
+
+                    if std > 0:
+
+                        init_value += torch.normal(0, std, size=param.size())
+                    param.copy_(init_value)
+                # if self.model_args.adapter_choice != 'lora':
+                #     pass
                     # if 'adapter_proj_1' in name:
                     #     #init_value = torch.normal(0, std, size=param.size())
                     #     init_value = torch.eye(param.size(0)) + torch.normal(0, std, size=param.size())

@@ -44,7 +44,7 @@ from models import LMForPromptFinetuning, BertForPromptFinetuning, RobertaForPro
 import higher
 
 import transformers
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer, EvalPrediction
 from transformers.data.data_collator import DataCollator, DataCollatorWithPadding, default_data_collator
 from transformers.file_utils import (
     CONFIG_NAME,
@@ -309,7 +309,8 @@ class Trainer(transformers.Trainer):
         self.data_collator = data_collator if data_collator is not None else default_collator
 
         #self.large_train_dataset = train_large_dataset
-        np.random.shuffle(train_dataset.example_idx)
+        #np.random.shuffle(train_dataset.example_idx)
+        self.train_dataset = train_dataset
         self.train_demo_dataset = train_demo_dataset
         self.un_train_dataset = un_train_dataset
         # if self.args.use_last_epoch:
@@ -457,7 +458,7 @@ class Trainer(transformers.Trainer):
                     )
                 self.use_apex = True
 
-    def create_optimizer_and_scheduler(self, num_training_steps, learning_rate=None, warmup_steps=None):
+    def create_optimizer_and_scheduler(self, num_training_steps, learning_rate=None, warmup_steps=None, weight_decay=None):
         """
         Based on Transformers' default one, we add fixing layer option where the bottom n layers' parameters
         are fixed and only the top layers are further fine-tuned.
@@ -467,6 +468,9 @@ class Trainer(transformers.Trainer):
 
         if warmup_steps is None:
             warmup_steps = self.args.warmup_steps
+
+        if weight_decay is None:
+            weight_decay = self.args.weight_decay
 
         if self.optimizer is None:
             params = {}
@@ -502,7 +506,7 @@ class Trainer(transformers.Trainer):
             optimizer_grouped_parameters = [
                 {
                     "params": [p for n, p in params.items() if not any(nd in n for nd in no_decay)],
-                    "weight_decay": self.args.weight_decay,
+                    "weight_decay": weight_decay,
                 },
                 {
                     "params": [p for n, p in params.items() if any(nd in n for nd in no_decay)],
@@ -1108,7 +1112,18 @@ class Trainer(transformers.Trainer):
         else:
             raise NotImplementedError
 
-        self.model = model_fn(config, self.teacher_model.model_args, self.teacher_model.data_args)
+
+        if self.teacher_model.data_args.prompt:
+            self.model = model_fn(config, self.teacher_model.model_args, self.teacher_model.data_args)
+        else:
+            self.model = model_fn.from_pretrained(
+                self.teacher_model.model_args.model_name_or_path,
+                from_tf=bool(".ckpt" in self.teacher_model.model_args.model_name_or_path),
+                config=config,
+                cache_dir=self.teacher_model.model_args.cache_dir,
+            )
+            self.model.model_args = self.teacher_model.model_args
+            self.model.data_args = self.teacher_model.data_args
 
         # import pdb
         # pdb.set_trace()
@@ -1472,11 +1487,12 @@ class Trainer(transformers.Trainer):
 
                             semi_learning_rate = self.args.semi_learning_rate
                             semi_warmup_steps = self.args.semi_warmup_ratio * update_teacher_steps
+                            semi_weight_decay = self.args.semi_weight_decay
                             # self.args.learning_rate = self.args.prompt_learning_rate
                             self.optimizer = None
                             self.lr_scheduler = None
                             t_total = self_training_total_steps
-                            self.create_optimizer_and_scheduler(num_training_steps=t_total, learning_rate=semi_learning_rate, warmup_steps=semi_warmup_steps)
+                            self.create_optimizer_and_scheduler(num_training_steps=t_total, learning_rate=semi_learning_rate, warmup_steps=semi_warmup_steps, weight_decay=semi_weight_decay)
                             self.t_total = t_total
                             #####
                             #self.train_dataset = self.normal_train_dataset

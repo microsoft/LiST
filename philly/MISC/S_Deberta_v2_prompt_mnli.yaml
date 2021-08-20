@@ -3,10 +3,8 @@ description: Fintuning-study
 target:
   # which virtual cluster you belong to (msrlabs, etc.). Everyone has access to "msrlabs".
   service: amlk8s
-  name: itphyperdgx2cl1
-  vc: hai3
-#  name: itplabrr1cl1
-#  vc: resrchvc
+  name: itplabrr1cl1
+  vc: resrchvc
   # physical cluster to use (cam, gcr, rr1, rr2) or Azure clusters (eu1, eu2, etc.)
   # eu1(p100) eu2(p40), rr1 (v100) sc1(v100) sc3(v100)
   #cluster: rr1
@@ -39,21 +37,23 @@ data:
 
 search:
     job_template:
-        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{update_component}_{adapter_init_std}
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}
         sku: 24G1
         command:
           - python run.py
             --task_name {TASK}
-            --data_dir $$PT_DATA_DIR/original/{TASK}/
+            --data_dir $$PT_DATA_DIR/clue/{TASK}/{K}-{SEED}
             --output_dir $$PT_OUTPUT_DIR/
             --overwrite_output_dir
             --do_train
             --overwrite_cache
             --do_eval
+            --do_predict
             --model_name_or_path {MODEL}
             --few_shot_type {TYPE}
             --num_k {K}
             --max_seq_length {max_seq_length}
+            --max_steps {MAX_STEP}
             --per_device_train_batch_size {BS}
             --per_device_eval_batch_size 16
             --gradient_accumulation_steps {GS}
@@ -63,9 +63,12 @@ search:
             --num_train_epochs {num_train_epochs}
             --seed {SEED}
             --contrast_training {CT}
+            --template {TEMPLATE}
             --psuedo_selection_opt {OPT}
             --soft_label {SOFT_LABEL}
             --is_semi {SEMI}
+            --adv_opt {ADV}
+            --hybrid {hybrid}
             --continuous_prompt {continuous_prompt}
             --un_train_batch_size {un_train_batch_size}
             --self_training_start_iter {self_training_start_iter}
@@ -76,26 +79,22 @@ search:
             --prompt_length {prompt_length}
             --demo_condon_steps {demo_condon_steps}
             --prompt_learning_rate {prompt_LR}
-            --update_component {update_component}
-            --adapter_dim {adapter_dim}
-            --adapter_choice {adapter_choice}
-            --adapter_init_std {adapter_init_std}
-            --use_last_epoch
+            --use_clue
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['MNLI', "RTE", "QQP" ] #['MNLI', 'CoLA', "RTE", "QQP", "QNLI", "MRPC", "SST", "STS-B"]
+        values: ['MNLI']
       - name: MODEL
         spec: discrete
-        values: ['roberta-base', 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
+        values: ['microsoft/deberta-v2-xlarge']
       - name: TYPE
         spec: discrete
         values: ['prompt']
       - name: BS
         spec: discrete
-        values: [32]
+        values: [4]
       - name: MBS
         spec: discrete
         values: [4]
@@ -107,19 +106,19 @@ search:
         values: [256]
       - name: K
         spec: discrete
-        values: [-1] #, 20, 30]
+        values: [10, 20, 30]
       - name: LR
         spec: discrete
-        values: [1e-4] #1e-2, 1e-3]
+        values: [5e-6] #1e-2, 1e-3]
       - name: num_train_epochs
         spec: discrete
         values: [10]
       - name: EVAL_STEP
         spec: discrete
-        values: [1000]
+        values: [50]
       - name: SEED
         spec: discrete
-        values: [1] #, 2, 3, 4, 5]
+        values: [1, 2, 3, 4, 5]
       - name: CT
         spec: discrete
         values: [0]
@@ -132,12 +131,21 @@ search:
       - name: SEMI
         spec: discrete
         values: [0]
+      - name: ADV
+        spec: discrete
+        values: [0]
+      - name: hybrid
+        spec: discrete
+        values: [0]
+      - name: TEMPLATE
+        spec: discrete
+        values: ['*cls**sent-_0*?*mask*,*+sentl_1**sep+*']
       - name: continuous_prompt
         spec: discrete
         values: [0]
       - name: un_train_batch_size
         spec: discrete
-        values: [16]
+        values: [4]
       - name: self_training_start_iter
         spec: discrete
         values: [10000]
@@ -159,21 +167,9 @@ search:
       - name: prompt_LR
         spec: discrete
         values: [1e-3]
-      - name: update_component
+      - name: MAX_STEP
         spec: discrete
-        values: ['adapter'] #[  'feedforward']
-      - name: adapter_dim
-        spec: discrete
-        values: ['128']
-      - name: adapter_choice
-        spec: discrete
-        values: ['simple']  #'linear_after' ]
-      - name: adapter_init_std
-        spec: discrete
-        values: [0, 0.002, 0.02, 0.2]
-        #values: [0.0000001, 0.002, 0.02, 0.2, 1]
-
-
+        values: [1000  ]
 
 
 

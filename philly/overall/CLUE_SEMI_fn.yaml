@@ -5,8 +5,12 @@ target:
   service: amlk8s
   name: itphyperdgx2cl1
   vc: hai3
+#  name: itpeastusv100cl
+#  vc: resrchvc
 #  name: itplabrr1cl1
 #  vc: resrchvc
+
+
   # physical cluster to use (cam, gcr, rr1, rr2) or Azure clusters (eu1, eu2, etc.)
   # eu1(p100) eu2(p40), rr1 (v100) sc1(v100) sc3(v100)
   #cluster: rr1
@@ -39,17 +43,18 @@ data:
 
 search:
     job_template:
-        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{update_component}_{adapter_init_std}
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{self_training_session}_{un_train_batch_size}_{OPT}
         sku: 24G1
         command:
           - python run.py
             --task_name {TASK}
-            --data_dir $$PT_DATA_DIR/original/{TASK}/
+            --data_dir $$PT_DATA_DIR/clue/{TASK}/{K}-{SEED}
             --output_dir $$PT_OUTPUT_DIR/
             --overwrite_output_dir
             --do_train
             --overwrite_cache
             --do_eval
+            --do_predict
             --model_name_or_path {MODEL}
             --few_shot_type {TYPE}
             --num_k {K}
@@ -66,9 +71,11 @@ search:
             --psuedo_selection_opt {OPT}
             --soft_label {SOFT_LABEL}
             --is_semi {SEMI}
+            --adv_opt {ADV}
+            --hybrid {hybrid}
             --continuous_prompt {continuous_prompt}
             --un_train_batch_size {un_train_batch_size}
-            --self_training_start_iter {self_training_start_iter}
+            --self_training_start_epoch {self_training_start_epoch}
             --sampling_steps {sampling_steps}
             --meta_train_batch_size {MBS}
             --update_teacher_steps {update_teacher_steps}
@@ -76,26 +83,30 @@ search:
             --prompt_length {prompt_length}
             --demo_condon_steps {demo_condon_steps}
             --prompt_learning_rate {prompt_LR}
-            --update_component {update_component}
-            --adapter_dim {adapter_dim}
-            --adapter_choice {adapter_choice}
-            --adapter_init_std {adapter_init_std}
+            --use_clue
             --use_last_epoch
+            --finetune_teacher_epoch {finetune_teacher_epoch}
+            --self_training_session {self_training_session}
+            --re_init
+            --semi_finetune
+            --un_gradient_accumulation_steps {un_gradient_accumulation_steps}
+            --meta_st_warmup {meta_st_warmup}
+            --semi_learning_rate {Semi_LR}
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['MNLI', "RTE", "QQP" ] #['MNLI', 'CoLA', "RTE", "QQP", "QNLI", "MRPC", "SST", "STS-B"]
+        values: ['SST-2'] # ['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] #['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] # 'mnli', 'sst-2'] #'QQP', 'RTE', 'subj', 'mpqa'] #, 'mnli', 'sst-2']
       - name: MODEL
         spec: discrete
-        values: ['roberta-base', 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
+        values: ['bert-base-uncased'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
-        values: ['prompt']
+        values: ['finetune']
       - name: BS
         spec: discrete
-        values: [32]
+        values: [4]
       - name: MBS
         spec: discrete
         values: [4]
@@ -104,32 +115,41 @@ search:
         values: [1]
       - name: max_seq_length
         spec: discrete
-        values: [256]
+        values: [128]
       - name: K
         spec: discrete
-        values: [-1] #, 20, 30]
+        values: [30] #, 20, 30]
       - name: LR
         spec: discrete
-        values: [1e-4] #1e-2, 1e-3]
+        values: [5e-6] #1e-2, 1e-3]
+      - name: Semi_LR
+        spec: discrete
+        values: [5e-6] #1e-2, 1e-3]
       - name: num_train_epochs
         spec: discrete
-        values: [10]
+        values: [50] # 10000]
       - name: EVAL_STEP
         spec: discrete
-        values: [1000]
+        values: [100]
       - name: SEED
         spec: discrete
-        values: [1] #, 2, 3, 4, 5]
+        values: [1,2,3,4,5] # 1
       - name: CT
         spec: discrete
         values: [0]
       - name: OPT
         spec: discrete
-        values: ['none']
+        values: ['meta_st'] #''meta_st']  #['meta_st']
       - name: SOFT_LABEL
         spec: discrete
         values: [0]
       - name: SEMI
+        spec: discrete
+        values: [0]
+      - name: ADV
+        spec: discrete
+        values: [0]
+      - name: hybrid
         spec: discrete
         values: [0]
       - name: continuous_prompt
@@ -138,15 +158,15 @@ search:
       - name: un_train_batch_size
         spec: discrete
         values: [16]
-      - name: self_training_start_iter
+      - name: self_training_start_epoch
         spec: discrete
-        values: [10000]
+        values: [50]
       - name: sampling_steps
         spec: discrete
         values: [1]
       - name: update_teacher_steps
         spec: discrete
-        values: [3000]
+        values: [1000]
       - name: prompt_encoder_type
         spec: discrete
         values: ['None']
@@ -159,19 +179,18 @@ search:
       - name: prompt_LR
         spec: discrete
         values: [1e-3]
-      - name: update_component
+      - name: finetune_teacher_epoch
         spec: discrete
-        values: ['adapter'] #[  'feedforward']
-      - name: adapter_dim
+        values: [50]
+      - name: self_training_session
         spec: discrete
-        values: ['128']
-      - name: adapter_choice
+        values: [6]
+      - name: un_gradient_accumulation_steps
         spec: discrete
-        values: ['simple']  #'linear_after' ]
-      - name: adapter_init_std
+        values: [1]
+      - name: meta_st_warmup
         spec: discrete
-        values: [0, 0.002, 0.02, 0.2]
-        #values: [0.0000001, 0.002, 0.02, 0.2, 1]
+        values: [0]
 
 
 

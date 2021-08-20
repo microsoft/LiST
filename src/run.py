@@ -116,6 +116,7 @@ class ModelArguments:
 
 
 
+
 @dataclass
 class DynamicDataTrainingArguments(DataTrainingArguments):
     """
@@ -490,6 +491,10 @@ class DynamicTrainingArguments(TrainingArguments):
         default=2e-5,
         metadata={"help":""}
     )
+    semi_weight_decay: float = field(
+        default=0.1,
+        metadata={"help": ""}
+    )
 
 
 
@@ -768,6 +773,8 @@ def main():
             config=config,
             cache_dir=model_args.cache_dir,
         )
+        model.model_args = model_args
+        model.data_args = data_args
 
 
 

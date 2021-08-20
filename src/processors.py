@@ -154,6 +154,7 @@ class CLUE_MnliProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
+
         return self._create_clue_examples(self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
 
     def get_large_train_examples(self, data_dir):
@@ -209,10 +210,21 @@ class CLUE_MnliProcessor(DataProcessor):
 
         examples = []
         for (i, line) in enumerate(lines):
-            guid = "%s-%s" % (set_type, line[0])
-            text_a = line[-3].lower()
-            text_b = line[-2].lower()
-            label = line[-1]
+            if len(line) > 8:
+                if i == 0:
+                    continue
+                guid = "%s-%s" % (set_type, line[0])
+                text_a = line[8].lower()
+                text_b = line[9].lower()
+                label = line[-1]
+                if set_type == 'un_train':
+                    if text_a + text_b in support_id_dict:
+                        continue
+            else:
+                guid = "%s-%s" % (set_type, line[0])
+                text_a = line[-3].lower()
+                text_b = line[-2].lower()
+                label = line[-1]
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
 

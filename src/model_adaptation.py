@@ -311,7 +311,7 @@ class AdapeterLayer(nn.Module):
             nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
             self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
             nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
-        else:
+        elif self.adapter_choice == 'linear_after':
             # self.adapter_dim = adapter_dim
             # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
             # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
@@ -321,6 +321,16 @@ class AdapeterLayer(nn.Module):
             nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
             self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
             nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
+        else:
+            # self.adapter_dim = adapter_dim
+            # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
+            # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
+
+            self.adapter_dim = adapter_dim
+            self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
+            # nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
+            # self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
+            # nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
 
 
             #nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
@@ -331,10 +341,14 @@ class AdapeterLayer(nn.Module):
         if self.adapter_choice == 'lora':
             result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
             return torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
-        else:
+        elif self.adapter_choice == 'linear_after':
             result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
             result = torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
             return result + x
+
+        else:
+            result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
+            return result
 
 
 class RobertaAdaOutput(nn.Module):
@@ -653,8 +667,8 @@ class RobertaAdaEncoder(nn.Module):
 
         next_decoder_cache = () if use_cache else None
         for i, layer_module in enumerate(self.layer):
-            if (i+1) % 3 == 0:
-               continue
+            # if (i+1) % 3 == 0:
+            #    continue
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 

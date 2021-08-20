@@ -85,6 +85,20 @@ def tokenize_multipart_input(
     token_type_ids = [] # Only for BERT
     mask_pos = None # Position of the mask token
 
+    if 't5' in type(tokenizer).__name__.lower():
+        special_token_mapping = {
+            'cls': 3, 'mask': 32099, 'sep': tokenizer.eos_token_id,
+            'sep+': tokenizer.eos_token_id,
+            'pseudo_token': tokenizer.unk_token_id
+        }
+
+    else:
+        special_token_mapping = {
+            'cls': tokenizer.cls_token_id, 'mask': tokenizer.mask_token_id, 'sep': tokenizer.sep_token_id,
+            'sep+': tokenizer.sep_token_id,
+            'pseudo_token': tokenizer.unk_token_id
+        }
+
     if prompt:
         """
         Concatenate all sentences and prompts based on the provided template.
@@ -538,7 +552,12 @@ class FewShotDataset(torch.utils.data.Dataset):
                     logger.info(f"Creating features from dataset file at {args.data_dir}")
 
                     # The support examples are sourced from the training set.
-                    self.support_examples = self.processor.get_train_examples(args.data_dir)
+                    try:
+                        self.support_examples = self.processor.get_train_examples(args.data_dir)
+                    except:
+                        logger.info("Change to a different processer")
+                        self.processor = processors_mapping[args.task_name]
+                        self.support_examples = self.processor.get_train_examples(args.data_dir)
 
                     self.processor.support_examples = self.support_examples
 
@@ -664,8 +683,6 @@ class FewShotDataset(torch.utils.data.Dataset):
 
         # If it is not training, we pre-process the data; otherwise, we process the data online.
 
-
-
         if mode not in ["train", "un_train"]:
             self.features = []
             _ = 0
@@ -728,7 +745,6 @@ class FewShotDataset(torch.utils.data.Dataset):
                 if sum(counts.values()) == len(counts) * max_demo_per_label:
                     break
 
-            #assert len(selection) > 0
 
         return selection
 

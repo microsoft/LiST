@@ -89,7 +89,7 @@ search:
         values: ['QQP']
       - name: MODEL
         spec: discrete
-        values: [ 'bert-base-uncased', 'bert-large-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
+        values: [  'roberta-base']
       - name: TYPE
         spec: discrete
         values: ['prompt']
@@ -107,7 +107,7 @@ search:
         values: [256]
       - name: K
         spec: discrete
-        values: [10, 20, 30]
+        values: [100]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]
