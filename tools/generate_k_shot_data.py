@@ -76,7 +76,7 @@ def split_header(task, lines):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--k", type=int, default=20,
+    parser.add_argument("--k", type=int, default=70,
         help="Training examples for each class.")
     parser.add_argument("--p", type=float, default=0,
                         help="Training examples for each class.")
@@ -90,7 +90,7 @@ def main():
 
     parser.add_argument("--data_dir", type=str, default="../data/original", help="Path to original data")
     parser.add_argument("--output_dir", type=str, default="../data", help="Output path")
-    parser.add_argument("--mode", type=str, default='k-shot-0.1x', choices=['k-shot', 'k-shot-10x', 'k-shot-0.1x'], help="k-shot or k-shot-10x (10x dev set)")
+    parser.add_argument("--mode", type=str, default='k-shot', choices=['k-shot', 'k-shot-10x', 'k-shot-0.1x'], help="k-shot or k-shot-10x (10x dev set)")
 
     args = parser.parse_args()
     args.output_dir = os.path.join(args.output_dir, args.mode)
@@ -154,12 +154,18 @@ def main():
                 with open(os.path.join(setting_dir, "train.tsv"), "w") as f:
                     for line in train_header:
                         f.write(line)
-                    for label in label_list:
+                    for i, label in enumerate(label_list):
                         if percentage != 0:
                             k = int(percentage * len(label_list[label]))
                             print(task, label, k)
+                        if i == len(label_list) -1:
+                            k = 24
+
                         for line in label_list[label][:k]:
                             f.write(line)
+                        if i == len(label_list) -1:
+                            k = 23
+
                 name = "dev.tsv"
                 if task == 'MNLI':
                     name = "dev_matched.tsv"
