@@ -317,6 +317,7 @@ class Trainer(transformers.Trainer):
         #     self.eval_dataset = train_dataset
         # else:
         self.eval_dataset = eval_dataset
+
         self.tokenizer = tokenizer
 
         self.sharded_ddp = None
@@ -1124,9 +1125,6 @@ class Trainer(transformers.Trainer):
             )
             self.model.model_args = self.teacher_model.model_args
             self.model.data_args = self.teacher_model.data_args
-
-        # import pdb
-        # pdb.set_trace()
         self.wipe_memory()
 
 

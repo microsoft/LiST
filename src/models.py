@@ -15,7 +15,7 @@ from transformers.modeling_utils import PreTrainedModel
 from loss import stable_kl, CeCriterion, KlCriterion, entropy, SymKlCriterion, ContrastiveLoss
 from processors import processors_mapping, num_labels_mapping, output_modes_mapping, compute_metrics_mapping, bound_mapping
 import logging
-from model_adaptation import RobertaAdaModel
+from model_adaptation import RobertaAdaModel, BertAdaModel
 import os
 
 logger = logging.getLogger(__name__)
@@ -433,14 +433,10 @@ class LMForPromptFinetuning(BertPreTrainedModel):
     ):
 
 
-
-
         if 't5' in self.config.model_type:
             logits, sequence_mask_output = self.lm_model.encode(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
 
         else:
-
-
 
             if fwd_type == 2:
                 assert inputs_embeds is not None
@@ -453,8 +449,6 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
             elif fwd_type == 1:
                 return self.lm_model.embed_encode(input_ids)
-
-
 
             if self.data_args.continuous_prompt == 1 and block_flag is not None and block_flag[0] is not None:
                 inputs_embeds = self.generate_continuous_prompt_inputs(input_ids, block_flag)
@@ -673,7 +667,10 @@ class BertForPromptFinetuning(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.bert = BertModel(config)
+        if config.adapter_choice != 'none':
+            self.bert = BertAdaModel(config)
+        else:
+            self.berta = BertModel(config)
         self.cls = BertOnlyMLMHead(config)
         self.init_weights()
 

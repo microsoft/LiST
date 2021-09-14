@@ -78,16 +78,16 @@ def split_header(task, lines):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--k", type=int, default=10,
+    parser.add_argument("--k", type=int, default=1000,
         help="Training examples for each class.")
     parser.add_argument("--p", type=float, default=0,
                         help="Training examples for each class.")
     parser.add_argument("--task", type=str, nargs="+", 
-        default=['mpqa'],
+        default=['RTE', 'MNLI'],
         help="Task names")
     #,
     parser.add_argument("--seed", type=int, nargs="+", 
-        default=[7],
+        default=[1,2,3,4,5],
         help="Random seeds")
 
     parser.add_argument("--data_dir", type=str, default="../data/original", help="Path to original data")
@@ -97,7 +97,8 @@ def main():
     args = parser.parse_args()
     args.output_dir = os.path.join(args.output_dir, args.mode)
 
-    k = args.k
+    k = int(args.k * 0.8)
+    total = int(args.k)
     percentage = 0
     print("K =", k)
     datasets = load_datasets(args.data_dir, args.task)
@@ -116,9 +117,11 @@ def main():
                 train_header, train_lines = split_header(task, dataset["train"])
                 np.random.shuffle(train_lines)
                 np.random.seed(100)
-
-                test_header, test_lines = split_header(task, dataset["dev"])
-                np.random.shuffle(test_lines)
+                # print(dataset.keys())
+                #
+                # test_header, test_lines = split_header(task, dataset["dev"])
+                #
+                # np.random.shuffle(test_lines)
             else:
                 # Other datasets 
                 train_lines = dataset['train'].values.tolist()
@@ -127,15 +130,15 @@ def main():
 
                 np.random.seed(100)
 
-                test_lines = dataset['test'].values.tolist()
-                np.random.shuffle(test_lines)
+                # test_lines = dataset['test'].values.tolist()
+                # np.random.shuffle(test_lines)
 
             # Set up dir
             task_dir = os.path.join(args.output_dir, task)
             if percentage != 0:
                 setting_dir = os.path.join(task_dir, f"{percentage}-{seed}")
             else:
-                setting_dir = os.path.join(task_dir, f"{k}-{seed}")
+                setting_dir = os.path.join(task_dir, f"{args.k}-{seed}")
             os.makedirs(setting_dir, exist_ok=True)
 
             # Write test splits
@@ -151,8 +154,6 @@ def main():
                             f.write(line)
 
             else:
-                # Other datasets
-                # Use the original test sets
                 dataset['test'].to_csv(os.path.join(setting_dir, 'test.csv'), header=False, index=False)
 
 
@@ -164,41 +165,36 @@ def main():
                     for line in train_lines[:k]:
                         f.write(line)
 
+                name = "dev.tsv"
+                if task == 'MNLI':
+                    name = "dev_matched.tsv"
 
-                with open(os.path.join(setting_dir, "un_train.tsv"), "w") as f:
+
+                with open(os.path.join(setting_dir, name), "w") as f:
                     for line in train_header:
                         f.write(line)
-                    for line in train_lines[k:]:
+                    for line in train_lines[k:total]:
                         f.write(line)
 
-                with open(os.path.join(setting_dir, "test_clue.tsv"), "w") as f:
-                    for line in test_header:
-                        f.write(line)
-                    for line in test_lines[:210]:
-                        f.write(line)
-                # import pdb
-                # pdb.set_trace()
+
+
             else:
                 new_train = []
+                dev = []
 
-                new_un_train = []
 
-                new_test = []
+
 
                 for line in train_lines[:k]:
                     new_train.append(line)
                 new_train = DataFrame(new_train)
                 new_train.to_csv(os.path.join(setting_dir, 'train.csv'), header=False, index=False)
 
-                for line in train_lines[k:]:
-                    new_un_train.append(line)
-                new_un_train = DataFrame(new_un_train)
-                new_un_train.to_csv(os.path.join(setting_dir, 'un_train.csv'), header=False, index=False)
+                for line in train_lines[k:total]:
+                    dev.append(line)
+                dev = DataFrame(dev)
+                dev.to_csv(os.path.join(setting_dir, 'dev.csv'), header=False, index=False)
 
-                for line in test_lines[:210]:
-                    new_test.append(line)
-                new_test = DataFrame(new_test)
-                new_test.to_csv(os.path.join(setting_dir, 'test_clue.csv'), header=False, index=False)
 
 
 
