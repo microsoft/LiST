@@ -709,6 +709,14 @@ class RteProcessor(DataProcessor):
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training, dev and test sets."""
+
+
+
+        if set_type == "un_train":
+            
+            assert self.support_examples is not None
+            support_id_dict = {(example.text_a + example.text_b):example.guid for example in self.support_examples}
+
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -716,6 +724,9 @@ class RteProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[1]
             text_b = line[2]
+            if set_type == 'un_train':
+                if text_a + text_b in support_id_dict:
+                    continue
             label = line[-1]
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
@@ -755,6 +766,10 @@ class CLUE_RteProcessor(DataProcessor):
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training, dev and test sets."""
+        if set_type == "un_train":
+            assert self.support_examples is not None
+            support_id_dict = {(example.text_a + example.text_b):example.guid for example in self.support_examples}
+
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -762,6 +777,9 @@ class CLUE_RteProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[1]
             text_b = line[2]
+            if set_type == 'un_train':
+                if text_a + text_b in support_id_dict:
+                    continue
             label = line[-1]
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
