@@ -155,6 +155,6 @@ python src/run.py \
 # Delete the checkpoint 
 # Since we need to run multiple trials, saving all the checkpoints takes 
 # a lot of storage space. You can find all evaluation results in `log` file anyway.
-rm -r result/$TASK-$TYPE-$K-$SEED-$MODEL-$TRIAL_IDTF \
+#rm -r result/$TASK-$TYPE-$K-$SEED-$MODEL-$TRIAL_IDTF \
 
 done

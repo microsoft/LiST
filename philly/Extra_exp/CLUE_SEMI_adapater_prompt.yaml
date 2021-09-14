@@ -81,8 +81,6 @@ search:
             --prompt_length {prompt_length}
             --demo_condon_steps {demo_condon_steps}
             --prompt_learning_rate {prompt_LR}
-            --use_clue
-            --use_last_epoch
             --finetune_teacher_epoch {finetune_teacher_epoch}
             --self_training_session {self_training_session}
             --update_component {update_component}
@@ -97,10 +95,10 @@ search:
     params:
       - name: TASK
         spec: discrete
-        values: ['QQP', 'RTE', 'MNLI'] #['QQP', 'RTE', 'subj', 'mpqa', 'MNLI', 'SST-2']
+        values: ['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2']
       - name: MODEL
         spec: discrete
-        values: [ 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
+        values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
         values: ['prompt']
@@ -118,7 +116,7 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [100] #[30] #, 20, 30]
+        values: [30] #[30] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]
@@ -139,7 +137,7 @@ search:
         values: [0]
       - name: OPT
         spec: discrete
-        values: ['meta_st']
+        values: ['None']
       - name: SOFT_LABEL
         spec: discrete
         values: [1]
@@ -166,7 +164,7 @@ search:
         values: [1]
       - name: update_teacher_steps
         spec: discrete
-        values: [1000]
+        values: [5000]
       - name: prompt_encoder_type
         spec: discrete
         values: ['None']
@@ -184,7 +182,7 @@ search:
         values: [50]
       - name: self_training_session
         spec: discrete
-        values: [6]
+        values: [1]
       - name: update_component
         spec: discrete
         values: [ 'adapter' ] #[  'feedforward']
@@ -196,26 +194,13 @@ search:
         values: [ 'linear_after' ]
       - name: meta_st_warmup
         spec: discrete
-        values: [0.6]
+        values: [0.0]
       - name: semi_warmup_ratio
         spec: discrete
         values: [0]
       - name: semi_weight_decay
         spec: discrete
-        values: [0.1]
-
-
-
-
-
-#      - name: MAPPING
-#        spec: discrete
-#        values: ["'{''contradiction'':''No'',''entailment'':''Yes'',''neutral'':''Maybe'''}"]
-#      - name: TASK_EXTRA
-#        spec: discrete
-#        values: ["--max_seq_len 256 --num_sample 1"]
-
-
+        values: [0]
 
 
 
