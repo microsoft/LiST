@@ -41,6 +41,20 @@ We pack the original datasets (SST-2, SST-5, MR, CR, MPQA, Subj, TREC, CoLA, MNL
 ```bash
 cd data
 bash prepare_dataset.sh
+cd ..
+cd philly
+
 ```
 
-philly folder is `PromptST/philly/Extra_exp`
+New experimental folder is `PromptST/philly/Extra_exp`
+
+```
+Ablation study (Hard label): CLUE_ablation_hard_prompt.yaml
+Ablation study (No extra FN): CLUE_SEMI_adapater_prompt.yaml
+Low data resource (100/500/1000): 
+    Classic/Prompt FN: CLUE_more_data_FN.yaml
+    PromptST-adapter: CLUE_more_data_SEMI_adapter.yaml
+
+Full classic FN: FULL_finetune.yaml
+Finetune bias+head or head only: CLUE_finetune_component_prompt.yaml
+```

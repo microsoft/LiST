@@ -7,8 +7,6 @@ target:
   vc: hai3
 #  name: itplabrr1cl1
 #  vc: resrchvc
-
-
   # physical cluster to use (cam, gcr, rr1, rr2) or Azure clusters (eu1, eu2, etc.)
   # eu1(p100) eu2(p40), rr1 (v100) sc1(v100) sc3(v100)
   #cluster: rr1
@@ -41,8 +39,8 @@ data:
 
 search:
     job_template:
-        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{self_training_session}_{un_train_batch_size}_{adapter_dim}
-        sku: 24G1
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{update_component}
+        sku: G1
         command:
           - python run.py
             --task_name {TASK}
@@ -69,11 +67,9 @@ search:
             --psuedo_selection_opt {OPT}
             --soft_label {SOFT_LABEL}
             --is_semi {SEMI}
-            --adv_opt {ADV}
-            --hybrid {hybrid}
             --continuous_prompt {continuous_prompt}
             --un_train_batch_size {un_train_batch_size}
-            --self_training_start_epoch {self_training_start_epoch}
+            --self_training_start_iter {self_training_start_iter}
             --sampling_steps {sampling_steps}
             --meta_train_batch_size {MBS}
             --update_teacher_steps {update_teacher_steps}
@@ -81,24 +77,18 @@ search:
             --prompt_length {prompt_length}
             --demo_condon_steps {demo_condon_steps}
             --prompt_learning_rate {prompt_LR}
-            --finetune_teacher_epoch {finetune_teacher_epoch}
-            --self_training_session {self_training_session}
+            --use_clue
+            --use_last_epoch
             --update_component {update_component}
-            --adapter_dim {adapter_dim}
-            --adapter_choice {adapter_choice}
-            --meta_st_warmup {meta_st_warmup}
-            --semi_learning_rate {Semi_LR}
-            --semi_warmup_ratio {semi_warmup_ratio}
-            --semi_weight_decay {semi_weight_decay}
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['RTE', 'MNLI'] 
+        values: ['QQP', 'RTE', 'MNLI', 'SST-2', 'subj', 'mpqa']
       - name: MODEL
         spec: discrete
-        values: [  'bert-base-uncased', 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
+        values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']
       - name: TYPE
         spec: discrete
         values: ['prompt']
@@ -116,38 +106,29 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [100, 500, 1000] #[30] #, 20, 30]
+        values: [30] #, 20, 30]
       - name: LR
         spec: discrete
-        values: [1e-4] #1e-2, 1e-3]
-      - name: Semi_LR
-        spec: discrete
-        values: [1e-4] #1e-2, 1e-3]
+        values: [5e-6] #1e-2, 1e-3]
       - name: num_train_epochs
         spec: discrete
-        values: [10000]
+        values: [50]
       - name: EVAL_STEP
         spec: discrete
-        values: [100]
+        values: [50]
       - name: SEED
         spec: discrete
-        values: [1, 2, 3, 4, 5] # 1
+        values: [1, 2, 3, 4, 5] #, 2, 3, 4, 5]
       - name: CT
         spec: discrete
         values: [0]
       - name: OPT
         spec: discrete
-        values: ['meta_st']
+        values: ['none']
       - name: SOFT_LABEL
         spec: discrete
-        values: [1]
-      - name: SEMI
-        spec: discrete
-        values: [1]
-      - name: ADV
-        spec: discrete
         values: [0]
-      - name: hybrid
+      - name: SEMI
         spec: discrete
         values: [0]
       - name: continuous_prompt
@@ -155,16 +136,16 @@ search:
         values: [0]
       - name: un_train_batch_size
         spec: discrete
-        values: [16]
-      - name: self_training_start_epoch
+        values: [4]
+      - name: self_training_start_iter
         spec: discrete
-        values: [50]
+        values: [10000]
       - name: sampling_steps
         spec: discrete
         values: [1]
       - name: update_teacher_steps
         spec: discrete
-        values: [1000]
+        values: [3000]
       - name: prompt_encoder_type
         spec: discrete
         values: ['None']
@@ -177,30 +158,22 @@ search:
       - name: prompt_LR
         spec: discrete
         values: [1e-3]
-      - name: finetune_teacher_epoch
-        spec: discrete
-        values: [50]
-      - name: self_training_session
-        spec: discrete
-        values: [6]
       - name: update_component
         spec: discrete
-        values: [ 'adapter' ] #[  'feedforward']
-      - name: adapter_dim
-        spec: discrete
-        values: ['128']
-      - name: adapter_choice
-        spec: discrete
-        values: [ 'linear_after' ]
-      - name: meta_st_warmup
-        spec: discrete
-        values: [0.6]
-      - name: semi_warmup_ratio
-        spec: discrete
-        values: [0]
-      - name: semi_weight_decay
-        spec: discrete
-        values: [0]
+        values: ['bias', 'head'] #[  'feedforward']
+
+
+
+
+
+#      - name: MAPPING
+#        spec: discrete
+#        values: ["'{''contradiction'':''No'',''entailment'':''Yes'',''neutral'':''Maybe'''}"]
+#      - name: TASK_EXTRA
+#        spec: discrete
+#        values: ["--max_seq_len 256 --num_sample 1"]
+
+
 
 
 

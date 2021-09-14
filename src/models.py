@@ -239,6 +239,21 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                     #     continue
 
                 param.requires_grad = False
+        elif 'bias' in component:
+            for name, param in self.lm_model.named_parameters():
+                if 'bias' in name:
+                    continue
+                    # if 'lm_head' in name:
+                    #
+                    # if 'output' in name:
+                    #     continue
+
+                param.requires_grad = False
+        elif 'head' in component:
+            for name, param in self.lm_model.named_parameters():
+                param.requires_grad = False
+
+
 
         self.unfreeze_classification_head()
 
