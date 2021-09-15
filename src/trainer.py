@@ -1582,16 +1582,16 @@ class Trainer(transformers.Trainer):
                     if self.args.use_last_epoch: # and not (self.args.semi_finetune and self.args.is_semi == 1):
                         continue
                     if self.global_step % self.args.eval_steps == 0:
-                        if self.args.psuedo_selection_opt == 'meta_st' and \
-                            self.args.is_semi == 1 and not (finetune):
-                            output = self.evaluate(self.meta_valid_dataset)
-                        elif self.args.semi_finetune and \
-                                self.args.is_semi == 1 and not (finetune):
-                            output = self.evaluate(self.train_dataset)
-                        elif self.args.use_last_epoch:
-                            continue
-                        else:
-                            output = self.evaluate()
+                        # if self.args.psuedo_selection_opt == 'meta_st' and \
+                        #     self.args.is_semi == 1 and not (finetune):
+                        #     output = self.evaluate(self.meta_valid_dataset)
+                        # elif self.args.semi_finetune and \
+                        #         self.args.is_semi == 1 and not (finetune):
+                        #     output = self.evaluate(self.train_dataset)
+                        # elif self.args.use_last_epoch:
+                        #     continue
+                        # else:
+                        output = self.evaluate()
 
                         metrics = output.metrics
 
