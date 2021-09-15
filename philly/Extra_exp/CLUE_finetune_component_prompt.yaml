@@ -106,7 +106,7 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [30] #, 20, 30]
+        values: [10, 20, 30] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]
