@@ -685,7 +685,7 @@ class BertForPromptFinetuning(BertPreTrainedModel):
         if config.adapter_choice != 'none':
             self.bert = BertAdaModel(config)
         else:
-            self.berta = BertModel(config)
+            self.bert = BertModel(config)
         self.cls = BertOnlyMLMHead(config)
         self.init_weights()
 

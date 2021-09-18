@@ -8,7 +8,7 @@
 # MODEL: pre-trained model name (roberta-*, bert-*), see Transformers model list
 
 # Number of training instances per label
-K=500
+K=100
 
 # Training steps
 MAX_STEP=300000
@@ -135,12 +135,12 @@ python src/run.py \
     --learning_rate $LR \
     --logging_steps $EVAL_STEP \
     --eval_steps $EVAL_STEP \
-    --num_train_epochs 50 \
+    --num_train_epochs 5 \
     --seed $SEED \
     --contrast_training 0 \
     --psuedo_selection_opt 'none' \
     --soft_label 0 \
-    --is_semi 1 \
+    --is_semi 0 \
     --continuous_prompt 0 \
     --un_train_batch_size 8 \
     --self_training_start_iter 500 \
