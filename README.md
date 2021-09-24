@@ -46,7 +46,21 @@ cd philly
 
 ```
 
-New experimental folder is `PromptST/philly/Extra_exp`
+New experimental folder is `PromptST/philly/9_23
+
+
+```
+1: Prompt & Classic FN with BERT, ROBERTA: Change 100 shot to True Few-shot
+2: Prompt & Classic FN with BERT, ROBERTA with 500/100
+3: PromptST with revision on high resource (500/1000)
+4: Ablation analysis without fine-tune step
+5: Full finetuning for QQP. Old one crashses.
+6: metast for QQP. Old one creashes.
+7: New added housbly adapter with FN
+
+```
+
+Last time experiments:
 
 ```
 Ablation study (Hard label): CLUE_ablation_hard_prompt.yaml
