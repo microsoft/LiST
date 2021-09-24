@@ -18,7 +18,7 @@ from transformers import GlueDataTrainingArguments as DataTrainingArguments
 from transformers import HfArgumentParser, TrainingArguments, set_seed
 
 from dataset import FewShotDataset
-from models import LMForPromptFinetuning, BertForPromptFinetuning, RobertaForPromptFinetuning, DebertaForPromptFinetuning, resize_token_type_embeddings
+from models import LMForPromptFinetuning, RobertaForSequenceClassification, BertForPromptFinetuning, RobertaForPromptFinetuning, DebertaForPromptFinetuning, resize_token_type_embeddings
 from trainer import Trainer
 from processors import processors_mapping, num_labels_mapping, output_modes_mapping, compute_metrics_mapping, bound_mapping
 
@@ -690,6 +690,11 @@ def main():
         #     raise NotImplementedError
     elif model_args.few_shot_type == 'finetune':
         model_fn = AutoModelForSequenceClassification
+    elif model_args.few_shot_type == 'finetune_adapter':
+        model_fn = RobertaForSequenceClassification
+        config.adapter_dim = model_args.adapter_dim
+        config.adapter_alpha = model_args.adapter_alpha
+        config.adapter_choice = model_args.adapter_choice
     else:
         raise NotImplementedError
 

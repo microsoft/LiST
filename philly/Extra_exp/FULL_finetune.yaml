@@ -82,7 +82,7 @@ search:
     params:
       - name: TASK
         spec: discrete
-        values:  ['QQP', 'RTE', 'CoLA', 'MNLI', 'SST-2', 'subj', 'mpqa']
+        values:  ['QQP', 'RTE', 'MNLI', 'SST-2', 'subj', 'mpqa']
       - name: MODEL
         spec: discrete
         values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base', 'microsoft/deberta-large']

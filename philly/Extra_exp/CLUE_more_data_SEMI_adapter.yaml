@@ -164,7 +164,7 @@ search:
         values: [1]
       - name: update_teacher_steps
         spec: discrete
-        values: [1000]
+        values: [3000]
       - name: prompt_encoder_type
         spec: discrete
         values: ['None']

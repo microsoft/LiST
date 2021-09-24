@@ -1428,11 +1428,19 @@ class Trainer(transformers.Trainer):
                             if delta == update_teacher_steps:
 
                                 logger.info("######### Start finetuning #########")
+
+                                if not self.args.use_last_epoch:
+                                    model_file = os.path.join(self.args.output_dir, "pytorch_model.bin")
+                                    if model_file is not None and os.path.exists(model_file):
+                                        logger.info('loading model from {}'.format(model_file))
+                                        self.model.load_state_dict(torch.load(model_file))
+
                                 # self.args.learning_rate = learning_rate
                                 output = self.evaluate()
                                 metrics = output.metrics
                                 objective = self.dev_objective(metrics)
                                 logger.info("Test result: {}".format(objective))
+
                                 # self.optimizer = None
                                 # self.lr_scheduler = None
                                 # t_total = finetune_teacher_steps
@@ -1448,11 +1456,12 @@ class Trainer(transformers.Trainer):
                             if delta == 0 and (self.args.semi_finetune or self.args.psuedo_selection_opt == 'meta_st'):
                                 if self.args.psuedo_selection_opt == 'meta_st':
                                     logger.info("######### Start meta st #########")
+
+
                                 if self.args.use_last_epoch:
                                     output = self.evaluate()
                                     metrics = output.metrics
                                     objective = self.dev_objective(metrics)
-                                    self.objective = -float("inf")
                                     logger.info("Test result: {}".format(objective))
                                     self.save_model(self.args.output_dir)
                                 session_num += 1
@@ -1469,6 +1478,8 @@ class Trainer(transformers.Trainer):
                         if self.args.re_init or self.args.psuedo_selection_opt == 'meta_st':
 
                             logger.info('##### RE INIT MODEL #########')
+                        
+                            self.objective = -float("inf")
                             self.re_init()
 
 

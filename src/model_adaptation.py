@@ -30,6 +30,7 @@ class AdapeterLayer(nn.Module):
             n_out = n_in
 
         self.adapter_choice = adapter_choice
+        self.act_fun = None
 
         if self.adapter_choice == 'lora':
 
@@ -47,6 +48,17 @@ class AdapeterLayer(nn.Module):
             self.adapter_dim = adapter_dim
             self.adapter_proj_1 = nn.Linear(n_out, adapter_dim, bias=False)
             nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
+            self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
+            nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
+        elif self.adapter_choice == 'houlsby':
+            # self.adapter_dim = adapter_dim
+            # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
+            # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
+
+            self.adapter_dim = adapter_dim
+            self.adapter_proj_1 = nn.Linear(n_out, adapter_dim, bias=False)
+            nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
+            self.act_fun  = torch.nn.ReLU()
             self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
             nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
         else:
@@ -71,6 +83,12 @@ class AdapeterLayer(nn.Module):
             return torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
         elif self.adapter_choice == 'linear_after':
             result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
+            result = torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
+            return result + x
+        elif self.adapter_choice == 'houlsby':
+            result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
+            if self.act_fun is not None:
+                result = self.act_fun(result)
             result = torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
             return result + x
 

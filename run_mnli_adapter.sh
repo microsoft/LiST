@@ -8,7 +8,13 @@
 # MODEL: pre-trained model name (roberta-*, bert-*), see Transformers model list
 
 # Number of training instances per label
-K=100
+K=30
+GPU=1
+#TYPE=finetune_adapter
+TYPE=prompt
+TASK=MNLI
+BS=4
+MODEL=roberta-large
 
 # Training steps
 MAX_STEP=300000
@@ -101,7 +107,7 @@ esac
 # For medium-sized GPUs (e.g., 2080ti with 10GB memory), they can only take 
 # a maximum batch size of 2 when using large-size models. So we use gradient
 # accumulation steps to achieve the same effect of larger batch sizes.
-REAL_BS=8
+REAL_BS=4
 GS=$(expr $BS / $REAL_BS)
 
 # Use a random number to distinguish different trails (avoid accidental overwriting)
@@ -135,7 +141,7 @@ python src/run.py \
     --learning_rate $LR \
     --logging_steps $EVAL_STEP \
     --eval_steps $EVAL_STEP \
-    --num_train_epochs 5 \
+    --num_train_epochs 400 \
     --seed $SEED \
     --contrast_training 0 \
     --psuedo_selection_opt 'none' \
@@ -147,10 +153,12 @@ python src/run.py \
     --sampling_steps 1 \
     --meta_train_batch_size 8 \
     --update_teacher_steps 500 \
-    --update_component 'none' \
+    --update_component 'adapter' \
     --adapter_dim 128 \
     --adapter_choice 'linear_after'  \
-    --adapter_init_std 0.00002
+    --adapter_init_std 0.00002 \
+    --use_last_epoch \
+    --use_clue
 
 # Delete the checkpoint 
 # Since we need to run multiple trials, saving all the checkpoints takes 

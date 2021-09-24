@@ -92,6 +92,7 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                 self.lm_model = T5ForPromptFinetuning(config)
             else:
                 raise NotImplementedError
+
         else:
             raise NotImplementedError
 
@@ -138,15 +139,15 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
         if self.model_args.prompt_encoder_type == "lstm":
             modules = []
-            modules.append(torch.nn.LSTM(input_size=self.hidden_size,
-                                           hidden_size=self.hidden_size,
-                                           num_layers=2,
-                                           bidirectional=True,
-                                           batch_first=True))
-            modules.append(nn.Sequential(nn.Linear(2 * self.hidden_size, self.hidden_size),
-                                          nn.ReLU(),
-                                          nn.Linear(self.hidden_size, self.hidden_size)))
-            self.prompt_encoder = nn.Sequential(*modules)
+            # modules.append(torch.nn.LSTM(input_size=self.hidden_size,
+            #                                hidden_size=self.hidden_size,
+            #                                num_layers=2,
+            #                                bidirectional=True,
+            #                                batch_first=True))
+            # modules.append(nn.Sequential(nn.Linear(2 * self.hidden_size, self.hidden_size),
+            #                               nn.ReLU(),
+            #                               nn.Linear(self.hidden_size, self.hidden_size)))
+            self.prompt_encoder = None
 
         elif self.model_args.prompt_encoder_type == "mlp":
             self.prompt_encoder = torch.nn.Sequential(
@@ -155,6 +156,7 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                 torch.nn.Linear(self.hidden_size, self.hidden_size))
         else:
             self.prompt_encoder = None
+        self.prompt_encoder = None
         if self.data_args.continuous_prompt == 1:
             self.init_embedding()
 
@@ -221,7 +223,6 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                         if 'intermediate' in component:
                             if 'intermediate' in name:
                                 continue
-
                 param.requires_grad = False
         elif component == 'adapter':
             for name, param in self.lm_model.named_parameters():
@@ -1108,6 +1109,135 @@ class RobertaForPromptFinetuning(BertPreTrainedModel):
         if self.num_labels == 1:
             # Regression output
             output = (torch.exp(logits[..., 1].unsqueeze(-1)) * (self.ub - self.lb) + self.lb,)
+
+        return ((loss,) + output) if loss is not None else output
+
+
+class RobertaForSequenceClassification(BertPreTrainedModel):
+    _keys_to_ignore_on_load_missing = [r"position_ids"]
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+        self.config = config
+
+        if config.adapter_choice != 'none':
+            self.roberta = RobertaAdaModel(config, add_pooling_layer=False)
+        else:
+            self.roberta = RobertaModel(config, add_pooling_layer=False)
+
+        #self.roberta = RobertaModel(config, add_pooling_layer=False)
+        self.classifier = RobertaClassificationHead(config)
+
+        self.init_weights()
+
+    def freeze_lm_component(self, component):
+
+        if 'attention' in component:
+            for name, param in self.roberta.named_parameters():
+                if 'attention' in name:
+                    if 'output' in component:
+                        if 'output' in name:
+                            continue
+                    else:
+                        continue
+                param.requires_grad = False
+        elif 'feedforward' in component:
+            for name, param in self.roberta.named_parameters():
+                if 'dense' in name and 'attention' not in name:
+                    if 'output' in component:
+                        if 'output' in name:
+                            continue
+                    else:
+                        if 'intermediate' in component:
+                            if 'intermediate' in name:
+                                continue
+                param.requires_grad = False
+        elif component == 'adapter':
+            for name, param in self.roberta.named_parameters():
+                if 'adapter' in name:
+                    continue
+
+                param.requires_grad = False
+        elif 'embedding' in component:
+            for name, param in self.roberta.named_parameters():
+                if 'embedding' in name:
+                    continue
+                    # if 'lm_head' in name:
+                    #
+                    # if 'output' in name:
+                    #     continue
+
+                param.requires_grad = False
+        elif 'bias' in component:
+            for name, param in self.roberta.named_parameters():
+                if 'bias' in name:
+                    continue
+                    # if 'lm_head' in name:
+                    #
+                    # if 'output' in name:
+                    #     continue
+
+                param.requires_grad = False
+        elif 'head' in component:
+            for name, param in self.roberta.named_parameters():
+                param.requires_grad = False
+
+
+
+        self.unfreeze_classification_head()
+
+    def unfreeze_classification_head(self):
+        for name, param in self.roberta.named_parameters():
+            if 'lm_head' in name or ('cls' in name) or ('classifier' in name):
+                param.requires_grad = True
+
+
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        position_ids=None,
+        head_mask=None,
+        inputs_embeds=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None,
+    ):
+        r"""
+        labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
+            Labels for computing the sequence classification/regression loss. Indices should be in :obj:`[0, ...,
+            config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
+            If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+        """
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        outputs = self.roberta(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+        sequence_output = outputs[0]
+        logits = self.classifier(sequence_output)
+
+        loss = None
+
+        loss_fct = nn.CrossEntropyLoss()
+        loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+
+
+        #output = (logits,) + outputs[2:]
+        output = (logits,)
+
 
         return ((loss,) + output) if loss is not None else output
 

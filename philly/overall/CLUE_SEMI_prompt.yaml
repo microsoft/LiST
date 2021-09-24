@@ -103,7 +103,7 @@ search:
         values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
-        values: ['prompt']
+        values: ['finetune']
       - name: BS
         spec: discrete
         values: [4]

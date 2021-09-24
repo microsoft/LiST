@@ -97,10 +97,10 @@ search:
     params:
       - name: TASK
         spec: discrete
-        values: ['SST-2'] # ['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] #['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] # 'mnli', 'sst-2'] #'QQP', 'RTE', 'subj', 'mpqa'] #, 'mnli', 'sst-2']
+        values: ['QQP'] # ['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] #['MNLI', 'QQP', 'RTE', 'subj', 'mpqa',  'SST-2'] # 'mnli', 'sst-2'] #'QQP', 'RTE', 'subj', 'mpqa'] #, 'mnli', 'sst-2']
       - name: MODEL
         spec: discrete
-        values: ['bert-base-uncased'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
+        values: ['roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
         values: ['finetune']
@@ -142,7 +142,7 @@ search:
         values: ['meta_st'] #''meta_st']  #['meta_st']
       - name: SOFT_LABEL
         spec: discrete
-        values: [0]
+        values: [0, 1]
       - name: SEMI
         spec: discrete
         values: [0]
