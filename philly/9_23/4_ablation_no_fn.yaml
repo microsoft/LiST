@@ -90,6 +90,8 @@ search:
             --semi_learning_rate {Semi_LR}
             --semi_warmup_ratio {semi_warmup_ratio}
             --semi_weight_decay {semi_weight_decay}
+            --use_clue
+            --use_last_epoch
     type: grid
     max_trials: 1000
     params:
