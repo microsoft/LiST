@@ -52,6 +52,8 @@ cd philly
 
 ```
 8: PromptST without FN on MNLI/RTE
+9: FN with 500/1000 on MNLI/RTE, using last epoch
+10: PromptST FN with 500/1000 on MNLI/RTE, using last epoch
 
 ```
 
