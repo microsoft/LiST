@@ -43,10 +43,23 @@ cd data
 bash prepare_dataset.sh
 cd ..
 cd philly
+```
+
+
+
+9/27/2021 New experimental folder is PromptST/philly/9_27
+
+
+```
+8: PromptST without FN on MNLI/RTE
 
 ```
 
-New experimental folder is `PromptST/philly/9_23
+
+
+
+
+9/23/2021 New experimental folder is `PromptST/philly/9_23
 
 
 ```
