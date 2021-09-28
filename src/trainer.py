@@ -540,8 +540,7 @@ class Trainer(transformers.Trainer):
                 continue
             update_parameter.append(n)
 
-            if 'prompt_embedding' in n:
-                continue
+
             if 'decoder' in n:
 
                 if self.model.data_args.task_name == 'mnli':
@@ -1128,45 +1127,6 @@ class Trainer(transformers.Trainer):
         self.wipe_memory()
 
 
-        # self.model = self.model.from_pretrained(
-        #     self.teacher_model.model_args.model_name_or_path,
-        #     from_tf=bool(".ckpt" in self.teacher_model.model_args.model_name_or_path),
-        #     config=config,
-        #     cache_dir=self.teacher_model.model_args.cache_dir,
-        # )
-
-
-        ##new add
-
-
-        #self.model = self.model.to(self.args.device) if self.model is not None else None
-
-        # if self.args.fp16 and _use_apex:
-        #     if not transformers.is_apex_available():
-        #         raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
-        #     self.model, optimizer = amp.initialize(self.model, self.optimizer, opt_level=self.args.fp16_opt_level)
-        #
-        #     # Multi-gpu training (should be after apex fp16 initialization)
-        # if self.args.n_gpu > 1:
-        #     self.model = torch.nn.DataParallel(self.model)
-        #
-        #     # Distributed training (should be after apex fp16 initialization)
-        # if self.args.local_rank != -1:
-        #     self.model = torch.nn.parallel.DistributedDataParallel(
-        #         self.model,
-        #         device_ids=[self.args.local_rank],
-        #         output_device=self.args.local_rank,
-        #         find_unused_parameters=True,
-        #     )
-
-        # if self.teacher_model.data_args.prompt:
-        #     self.model.label_word_list = self.teacher_model.label_word_list
-        # if output_modes_mapping[data_args.task_name] == 'regression':
-        #     # lower / upper bounds
-        #     model.lb, model.ub = bound_mapping[data_args.task_name]
-        # self.model.model_args = self.teacher_model.model_args
-        # self.model.data_args = self.teacher_model.data_args
-        # self.model.tokenizer = self.teacher_model.tokenizer
 
     def clear_memory(self):
         gc.collect()
@@ -1231,7 +1191,9 @@ class Trainer(transformers.Trainer):
         update_teacher_steps = (self.args.update_teacher_steps // self.args.un_gradient_accumulation_steps)
 
         if self.args.is_semi == 1:
-            self_training_total_steps = update_teacher_steps + finetune_teacher_steps
+            self_training_total_steps = update_teacher_steps
+            if self.args.semi_finetune:
+                self_training_total_steps = self_training_total_steps  + finetune_teacher_steps
             self.un_train_dataloader = self.get_un_train_dataloader()
         else:
             self.un_train_dataloader = None
@@ -1298,17 +1260,6 @@ class Trainer(transformers.Trainer):
         demo_train_dataloader = self.demo_train_dataloader
 
         self.meta_train_iter = self.meta_train_dataloader.__iter__()
-
-
-        # if self.args.start_from_freeze and args.freeze:
-        #     self.model.freeze_lm()
-
-
-
-
-
-        # optimizer = self.optimizer
-        # scheduler = self.lr_scheduler
 
         # Check if saved optimizer or scheduler states exist
         if (
@@ -1423,7 +1374,7 @@ class Trainer(transformers.Trainer):
                     delta = delta % self_training_total_steps
                     self.delta = delta
 
-                    if self.args.psuedo_selection_opt == 'meta_st' or self.args.semi_finetune:
+                    if  self.args.semi_finetune:
                         if delta >= update_teacher_steps:
                             if delta == update_teacher_steps:
 
@@ -1441,14 +1392,7 @@ class Trainer(transformers.Trainer):
                                 objective = self.dev_objective(metrics)
                                 logger.info("Test result: {}".format(objective))
 
-                                # self.optimizer = None
-                                # self.lr_scheduler = None
-                                # t_total = finetune_teacher_steps
-                                #
-                                #
-                                # self.create_optimizer_and_scheduler(num_training_steps=t_total)
-                                # optimizer = self.optimizer
-                                # scheduler = self.lr_scheduler
+
                             finetune = True
 
                             self.loss_alpha = 1
@@ -1456,7 +1400,6 @@ class Trainer(transformers.Trainer):
                             if delta == 0 and (self.args.semi_finetune or self.args.psuedo_selection_opt == 'meta_st'):
                                 if self.args.psuedo_selection_opt == 'meta_st':
                                     logger.info("######### Start meta st #########")
-
 
                                 if self.args.use_last_epoch:
                                     output = self.evaluate()

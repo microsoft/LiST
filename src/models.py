@@ -130,6 +130,7 @@ class LMForPromptFinetuning(BertPreTrainedModel):
         else:
             self.prompt_embeddings = None
 
+
         self.prompt_embeddings = torch.nn.Embedding(self.data_args.prompt_length, self.hidden_size)
 
         if self.model_args.adapter_choice != 'none':
@@ -213,6 +214,7 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                     else:
                         continue
                 param.requires_grad = False
+            self.unfreeze_classification_head()
         elif 'feedforward' in component:
             for name, param in self.lm_model.named_parameters():
                 if 'dense' in name and 'attention' not in name:
@@ -224,39 +226,44 @@ class LMForPromptFinetuning(BertPreTrainedModel):
                             if 'intermediate' in name:
                                 continue
                 param.requires_grad = False
+            self.unfreeze_classification_head()
         elif component == 'adapter':
             for name, param in self.lm_model.named_parameters():
                 if 'adapter' in name:
                     continue
 
                 param.requires_grad = False
+            self.unfreeze_classification_head()
         elif 'embedding' in component:
             for name, param in self.lm_model.named_parameters():
                 if 'embedding' in name:
                     continue
-                    # if 'lm_head' in name:
-                    #
-                    # if 'output' in name:
-                    #     continue
+
 
                 param.requires_grad = False
+            self.unfreeze_classification_head()
         elif 'bias' in component:
             for name, param in self.lm_model.named_parameters():
                 if 'bias' in name:
                     continue
-                    # if 'lm_head' in name:
-                    #
-                    # if 'output' in name:
-                    #     continue
-
                 param.requires_grad = False
+            self.unfreeze_classification_head()
         elif 'head' in component:
             for name, param in self.lm_model.named_parameters():
                 param.requires_grad = False
+            self.unfreeze_classification_head()
+
+
+        elif "prompt_emb" in component:
+
+            for name, param in self.lm_model.named_parameters():
+                if 'prompt_emb' in name:
+                    continue
+                param.requires_grad = False
 
 
 
-        self.unfreeze_classification_head()
+
 
     def unfreeze_classification_head(self):
         for name, param in self.lm_model.named_parameters():
@@ -465,6 +472,8 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
             elif fwd_type == 1:
                 return self.lm_model.embed_encode(input_ids)
+
+
 
             if self.data_args.continuous_prompt == 1 and block_flag is not None and block_flag[0] is not None:
                 inputs_embeds = self.generate_continuous_prompt_inputs(input_ids, block_flag)
@@ -1468,6 +1477,8 @@ class DebertaForPromptFinetuning(DebertaPreTrainedModel):
 
         elif fwd_type == 1:
             return self.embed_encode(input_ids)
+
+
 
         if self.data_args.continuous_prompt == 1 and block_flag is not None:
             inputs_embeds = self.generate_continuous_prompt_inputs(input_ids, block_flag)

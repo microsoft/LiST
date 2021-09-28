@@ -81,6 +81,8 @@ search:
             --prompt_length {prompt_length}
             --demo_condon_steps {demo_condon_steps}
             --prompt_learning_rate {prompt_LR}
+            --use_clue
+            --use_last_epoch
             --finetune_teacher_epoch {finetune_teacher_epoch}
             --self_training_session {self_training_session}
             --update_component {update_component}
@@ -90,16 +92,15 @@ search:
             --semi_learning_rate {Semi_LR}
             --semi_warmup_ratio {semi_warmup_ratio}
             --semi_weight_decay {semi_weight_decay}
-            --semi_finetune
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['RTE', 'MNLI'] 
+        values: ['RTE', 'MNLI'] #['QQP', 'RTE', 'subj', 'mpqa', 'MNLI', 'SST-2']
       - name: MODEL
         spec: discrete
-        values: [  'bert-base-uncased', 'roberta-base', 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
+        values: [ 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
         values: ['prompt']
@@ -117,10 +118,10 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [500, 1000] #[30] #, 20, 30]
+        values: [30] #[30] #, 20, 30]
       - name: LR
         spec: discrete
-        values: [1e-4] #1e-2, 1e-3]
+        values: [5e-6] #1e-2, 1e-3]
       - name: Semi_LR
         spec: discrete
         values: [1e-4] #1e-2, 1e-3]
@@ -159,13 +160,13 @@ search:
         values: [16]
       - name: self_training_start_epoch
         spec: discrete
-        values: [50]
+        values: [400]
       - name: sampling_steps
         spec: discrete
         values: [1]
       - name: update_teacher_steps
         spec: discrete
-        values: [2000]
+        values: [1000]
       - name: prompt_encoder_type
         spec: discrete
         values: ['None']
@@ -201,7 +202,9 @@ search:
         values: [0]
       - name: semi_weight_decay
         spec: discrete
-        values: [0]
+        values: [0.0]
+
+
 
 
 
