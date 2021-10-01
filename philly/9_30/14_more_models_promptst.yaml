@@ -41,7 +41,7 @@ data:
 
 search:
     job_template:
-        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{self_training_session}_{un_train_batch_size}_{adapter_dim}_more_shots
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{self_training_session}_{un_train_batch_size}_moremodels
         sku: 24G1
         command:
           - python run.py
@@ -100,7 +100,7 @@ search:
         values: ['RTE', 'MNLI'] 
       - name: MODEL
         spec: discrete
-        values: [ 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
+        values: [  'bert-base-uncased', 'roberta-base'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
       - name: TYPE
         spec: discrete
         values: ['prompt']
@@ -118,7 +118,7 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [10, 20] #[30] #, 20, 30]
+        values: [10, 20, 30, 100] #[30] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]

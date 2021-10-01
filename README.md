@@ -47,6 +47,26 @@ cd philly
 
 
 
+
+
+9/30/2021 New experimental folder is PromptST/philly/9_30, please run bash command to download data as below
+
+
+```
+bash ./9_30/download.sh
+```
+
+```
+12: PromptST for K = 10, 20
+13: PromptST with different bottleneck dimension
+14: PromptST with bert-base, roberta-base for k=10,20,30,100
+15: PromptST with Full supervision 
+
+```
+
+
+
+
 9/27/2021 New experimental folder is PromptST/philly/9_27
 
 
