@@ -444,7 +444,7 @@ class DynamicTrainingArguments(TrainingArguments):
         metadata={"help": "Number of context examples"}
     )
     demo_condon_steps: int = field(
-        default=3000,
+        default=0,
         metadata={"help": "Number of context examples"}
     )
     cpu: bool = field(
@@ -826,6 +826,8 @@ def main():
 
     if eval_dataset is None:
         eval_dataset = test_dataset
+
+
 
 
     trainer = Trainer(

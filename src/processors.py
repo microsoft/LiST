@@ -154,6 +154,7 @@ class CLUE_MnliProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
 
         return self._create_clue_examples(self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
 
@@ -164,6 +165,7 @@ class CLUE_MnliProcessor(DataProcessor):
 
     def get_un_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
         logger.info("LOOKING AT {}".format(os.path.join(data_dir, "un_train.tsv")))
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "un_train.tsv")), "un_train")
 
@@ -198,7 +200,7 @@ class CLUE_MnliProcessor(DataProcessor):
 
             text_a = line[8].lower()
             text_b = line[9].lower()
-            if set_type == 'un_train':
+            if set_type == 'un_train' and '10000' not in self.data_dir:
                 if text_a + text_b in support_id_dict:
                     continue
             label = line[-1]
@@ -689,10 +691,12 @@ class RteProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
 
     def get_un_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "un_train.tsv")), "un_train")
 
     def get_dev_examples(self, data_dir):
@@ -724,7 +728,7 @@ class RteProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[1]
             text_b = line[2]
-            if set_type == 'un_train':
+            if set_type == 'un_train' and '10000' not in self.data_dir:
                 if text_a + text_b in support_id_dict:
                     continue
             label = line[-1]
@@ -746,10 +750,12 @@ class CLUE_RteProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
 
     def get_un_train_examples(self, data_dir):
         """See base class."""
+        self.data_dir = data_dir
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "un_train.tsv")), "un_train")
 
     def get_dev_examples(self, data_dir):
@@ -777,7 +783,7 @@ class CLUE_RteProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[1]
             text_b = line[2]
-            if set_type == 'un_train':
+            if set_type == 'un_train' and '10000' not in self.data_dir:
                 if text_a + text_b in support_id_dict:
                     continue
             label = line[-1]
