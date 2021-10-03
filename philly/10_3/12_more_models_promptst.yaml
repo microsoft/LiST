@@ -41,7 +41,7 @@ data:
 
 search:
     job_template:
-        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{adapter_dim}_vardim
+        name: search_{experiment_name:s}_Task_{TASK}_{MODEL}_seed_{SEED}_{TYPE}_{K}_{BS}_{num_train_epochs}_{self_training_session}_{un_train_batch_size}_{adapter_dim}_more_shots
         sku: 24G1
         command:
           - python run.py
@@ -92,12 +92,13 @@ search:
             --semi_weight_decay {semi_weight_decay}
             --semi_finetune
             --use_last_epoch
+            --use_clue
     type: grid
     max_trials: 1000
     params:
       - name: TASK
         spec: discrete
-        values: ['RTE', 'MNLI']
+        values: ['RTE', 'MNLI'] 
       - name: MODEL
         spec: discrete
         values: [ 'roberta-large'] # 'bert-large-uncased', 'bert-base-uncased', 'roberta-base', 'roberta-large', 'microsoft/deberta-base']
@@ -118,7 +119,7 @@ search:
         values: [128]
       - name: K
         spec: discrete
-        values: [30] #[30] #, 20, 30]
+        values: [10, 20] #[30] #, 20, 30]
       - name: LR
         spec: discrete
         values: [5e-6] #1e-2, 1e-3]
@@ -190,7 +191,7 @@ search:
         values: [ 'adapter' ] #[  'feedforward']
       - name: adapter_dim
         spec: discrete
-        values: ['2', '8', '32', '512']
+        values: ['128']
       - name: adapter_choice
         spec: discrete
         values: [ 'linear_after' ]

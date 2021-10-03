@@ -92,6 +92,7 @@ search:
             --semi_weight_decay {semi_weight_decay}
             --semi_finetune
             --use_last_epoch
+            --use_clue
     type: grid
     max_trials: 1000
     params:
