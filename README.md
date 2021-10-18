@@ -5,7 +5,7 @@ This is the implementation of the paper [LiST: Lite Self-training Makes Efficien
 
  
 ## Overview
-<img src="./figs/list.png" width="650"/>
+<img src="./figs/list.png" width="450"/>
 
 
 ## Setup Environment
