@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class AdapeterLayer(nn.Module):
-    def __init__(self, n_in, n_out=None, adapter_dim=16, adapter_choice='lora'):
+    def __init__(self, n_in, n_out=None, adapter_dim=128, adapter_choice='LiST'):
         super(AdapeterLayer, self).__init__()
         if not n_out:
             n_out = n_in
@@ -32,18 +32,7 @@ class AdapeterLayer(nn.Module):
         self.adapter_choice = adapter_choice
         self.act_fun = None
 
-        if self.adapter_choice == 'lora':
-
-            #self.adapter_dim = int(n_in/self.adapter_alpha)
-            self.adapter_dim = adapter_dim
-            self.adapter_proj_1 = nn.Linear(n_in, adapter_dim, bias=False)
-            nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
-            self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
-            nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
-        elif self.adapter_choice == 'linear_after':
-            # self.adapter_dim = adapter_dim
-            # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
-            # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
+        if self.adapter_choice == 'LiST':
 
             self.adapter_dim = adapter_dim
             self.adapter_proj_1 = nn.Linear(n_out, adapter_dim, bias=False)
@@ -51,9 +40,6 @@ class AdapeterLayer(nn.Module):
             self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
             nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
         elif self.adapter_choice == 'houlsby':
-            # self.adapter_dim = adapter_dim
-            # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
-            # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
 
             self.adapter_dim = adapter_dim
             self.adapter_proj_1 = nn.Linear(n_out, adapter_dim, bias=False)
@@ -62,26 +48,13 @@ class AdapeterLayer(nn.Module):
             self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
             nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
         else:
-            # self.adapter_dim = adapter_dim
-            # self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
-            # self.adapter_proj_1.weight = torch.nn.Parameter(torch.eye(n_out))
 
             self.adapter_dim = adapter_dim
             self.adapter_proj_1 = nn.Linear(n_out, n_out, bias=False)
-            # nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
-            # self.adapter_proj_2 = nn.Linear(adapter_dim, n_out, bias=False)
-            # nn.init.normal_(self.adapter_proj_2.weight, std=0.02)
-
-
-            #nn.init.normal_(self.adapter_proj_1.weight, std=0.02)
-
 
 
     def forward(self, x):
-        if self.adapter_choice == 'lora':
-            result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
-            return torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
-        elif self.adapter_choice == 'linear_after':
+        if self.adapter_choice == 'LiST':
             result = torch.matmul(x, self.adapter_proj_1.weight.type_as(x).T)
             result = torch.matmul(result, self.adapter_proj_2.weight.type_as(x).T)
             return result + x
@@ -114,11 +87,9 @@ class RobertaAdaOutput(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states, input_tensor):
-        if self.config.adapter_choice == 'lora':
-            hidden_states = self.dense(hidden_states) +self.adaptation_layer(hidden_states)
-        else:
-            hidden_states = self.dense(hidden_states)
-            hidden_states = self.adaptation_layer(hidden_states)
+
+        hidden_states = self.dense(hidden_states)
+        hidden_states = self.adaptation_layer(hidden_states)
 
 
         hidden_states = self.dropout(hidden_states)
@@ -139,11 +110,9 @@ class RobertaAdaSelfOutput(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states, input_tensor):
-        if self.config.adapter_choice == 'lora':
-            hidden_states = self.dense(hidden_states) + self.adaptation_layer(hidden_states)
-        else:
-            hidden_states = self.dense(hidden_states)
-            hidden_states = self.adaptation_layer(hidden_states)
+
+        hidden_states = self.dense(hidden_states)
+        hidden_states = self.adaptation_layer(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         # input_tensor = hidden_states

@@ -105,11 +105,11 @@ class ModelArguments:
         metadata={"help": ""}
     )
     adapter_choice: str = field(
-        default='none',
+        default='LiST',
         metadata={"help": ""}
     )
     adapter_init_std: float = field(
-        default=0.02,
+        default=0.0002,
         metadata={"help": ""}
     )
 
@@ -123,7 +123,7 @@ class DynamicDataTrainingArguments(DataTrainingArguments):
     Arguments for dynamic training.
     """
     num_k: Optional[int] = field(
-        default=16,
+        default=30,
         metadata={"help": "Number of training instances per class"}
     )
 
@@ -267,20 +267,20 @@ class DynamicDataTrainingArguments(DataTrainingArguments):
         metadata={"help": "(DO NOT List of templates (only initialized after the program starts."}
     )
     continuous_prompt: int = field(
-        default=1,
-        metadata={"help": "Number of context examples"}
+        default=0,
+        metadata={"help": ""}
     )
     prompt_length: int = field(
-        default=20,
+        default=0,
         metadata={"help": ""}
     )
     write_cache: bool = field(
         default=False,
-        metadata={"help": "Automatically generate template for using demonstrations"}
+        metadata={"help": ""}
     )
     use_clue: bool = field(
         default=False,
-        metadata={"help": "Automatically generate template for using demonstrations"}
+        metadata={"help": ""}
     )
 
 
@@ -333,21 +333,21 @@ class DynamicTrainingArguments(TrainingArguments):
     )
 
     update_teacher_steps: int = field(
-        default=40,
+        default=100,
         metadata={"help": "steps of updating teacher model"}
     )
 
     finetune_teacher_epoch: int = field(
-        default=20,
+        default=50,
         metadata={"help": "steps of finetuning teacher model"}
     )
 
     self_training_start_epoch: int = field(
-        default=20,
-        metadata={"help": "Self-training beggining step"}
+        default=50,
+        metadata={"help": ""}
     )
     self_training_start_iter: int = field(
-        default=20,
+        default=50,
         metadata={"help": "Self-training beggining step"}
     )
 
@@ -363,7 +363,7 @@ class DynamicTrainingArguments(TrainingArguments):
     )
     use_psuedo_label: int = field(
         default=1,
-        metadata={"help": "Semi-supervised learning or not"}
+        metadata={"help": ""}
     )
 
     un_train_batch_size: int = field(
@@ -372,21 +372,21 @@ class DynamicTrainingArguments(TrainingArguments):
     )
     meta_train_batch_size: int = field(
         default=4,
-        metadata={"help": "batch_size for unlabled data"}
+        metadata={"help": "batch_size for meta re-weighting"}
     )
     prompt_learning_rate: float = field(
         default=1e-5,
-        metadata={"help": "threshold for data selection"}
+        metadata={"help": ""}
     )
 
     soft_label: int = field(
         default=1,
-        metadata={"help": "batch_size for unlabled data"}
+        metadata={"help": "b"}
     )
 
     psuedo_selection_opt: str = field(
-        default='confidence',
-        metadata={"help": "confidence/meta_st"}
+        default='meta',
+        metadata={"help": "confidence/meta"}
     )
 
     un_gradient_accumulation_steps: int = field(
@@ -401,7 +401,7 @@ class DynamicTrainingArguments(TrainingArguments):
     )
 
     confidence_thresh: float = field(
-        default=0.8,
+        default=0.0,
         metadata={"help": "threshold for data selection"}
     )
 
@@ -411,60 +411,56 @@ class DynamicTrainingArguments(TrainingArguments):
     )
     demo_condon: int = field(
         default=0,
-        metadata={"help": "temperature value for prediction sharpen"}
-    )
-    start_from_freeze: bool = field(
-        default=True,
-        metadata={"help": "temperature value for prediction sharpen"}
+        metadata={"help": ""}
     )
     freeze: bool = field(
         default=False,
-        metadata={"help": "temperature value for prediction sharpen"}
+        metadata={"help": ""}
     )
 
     sharpen: bool = field(
         default=False,
-        metadata={"help": "sharpen the prediction"}
+        metadata={"help": ""}
     )
 
     adv_opt: int = field(
         default=0,
-        metadata={"help": "0: no adv, 1: adv for labeled data, 2: adv for unlabeled data, 3: adv for all the data"}
+        metadata={"help": ""}
     )
     co_training: int = field(
         default=0,
-        metadata={"help": "0: no adv, 1: adv for labeled data, 2: adv for unlabeled data, 3: adv for all the data"}
+        metadata={"help": ""}
     )
     contrast_training: int = field(
-        default=1,
-        metadata={"help": "Save test file logit with name $TASK-$MODEL_ID-$ARRAY_ID.npy"}
+        default=0,
+        metadata={"help": ""}
     )
     sampling_steps: int = field(
         default=1,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": ""}
     )
     demo_condon_steps: int = field(
         default=0,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": ""}
     )
     cpu: bool = field(
         default=False,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": ""}
     )
     use_last_epoch: bool = field(
         default=False,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": "Report the performance of last step"}
     )
     freeze_encoder: bool = field(
         default=False,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": ""}
     )
     only_train_bias: bool = field(
         default=False,
-        metadata={"help": "Number of context examples"}
+        metadata={"help": ""}
     )
     self_training_session: int = field(
-        default=5,
+        default=6,
         metadata={"help": "Number of context examples"}
     )
     update_k_layers: int = field(
@@ -472,15 +468,15 @@ class DynamicTrainingArguments(TrainingArguments):
         metadata={"help": "Number of context examples"}
     )
     update_component: str = field(
-        default='none',
+        default='adapter',
         metadata={"help": "confidence/meta_st"}
     )
     semi_finetune: bool = field(
-        default=False,
+        default=True,
         metadata={"help": "self-training use finetuning stage"}
     )
     meta_st_warmup: float = field(
-        default=0,
+        default=0.6,
         metadata={"help": "warmup_steps"}
     )
     semi_warmup_ratio: float = field(
@@ -488,11 +484,11 @@ class DynamicTrainingArguments(TrainingArguments):
         metadata={"help": "warmup_steps"}
     )
     semi_learning_rate: float = field(
-        default=2e-5,
+        default=1e-4,
         metadata={"help":""}
     )
     semi_weight_decay: float = field(
-        default=0.1,
+        default=0.0,
         metadata={"help": ""}
     )
 
@@ -679,15 +675,7 @@ def main():
 
 
     if 'prompt' in model_args.few_shot_type:
-        # if config.model_type == 'roberta':
-        #     model_fn = RobertaForPromptFinetuning
-        # elif config.model_type == 'bert':
-        #     model_fn = BertForPromptFinetuning
-        # elif config.model_type =='deberta':
-        #     model_fn = DebertaForPromptFinetuning
         model_fn = LMForPromptFinetuning
-        # else:
-        #     raise NotImplementedError
     elif model_args.few_shot_type == 'finetune':
         model_fn = AutoModelForSequenceClassification
     elif model_args.few_shot_type == 'finetune_adapter':
@@ -698,20 +686,7 @@ def main():
     else:
         raise NotImplementedError
 
-    # if training_args.co_training == 1:
-    #     if 'prompt'  in model_args.few_shot_type:
-    #         co_model_fn = AutoModelForSequenceClassification
-    #
-    #     elif model_args.few_shot_type == 'finetune':
-    #         if config.model_type == 'roberta':
-    #             co_model_fn = RobertaForPromptFinetuning
-    #         elif config.model_type == 'bert':
-    #             co_model_fn = BertForPromptFinetuning
-    #         else:
-    #             raise NotImplementedError
-    #
-    #     else:
-    #         raise NotImplementedError
+
     special_tokens = []
 
 

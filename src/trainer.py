@@ -136,43 +136,6 @@ if version.parse(torch.__version__) < version.parse("1.6"):
 else:
     _use_native_amp = True
     from torch.cuda.amp import autocast
-#
-# if version.parse(torch.__version__) < version.parse("1.2"):
-#     _use_ddp_no_sync = False
-# else:
-#     _use_ddp_no_sync = True
-#
-# if is_datasets_available():
-#     import datasets
-#
-# if is_torch_tpu_available():
-#     import torch_xla.core.xla_model as xm
-#     import torch_xla.debug.metrics as met
-#     import torch_xla.distributed.parallel_loader as pl
-#
-# if is_tensorboard_available():
-#     from transformers.integrations import TensorBoardCallback
-#
-#     DEFAULT_CALLBACKS.append(TensorBoardCallback)
-#
-#
-# if is_wandb_available():
-#     from transformers.integrations import WandbCallback
-#
-#     DEFAULT_CALLBACKS.append(WandbCallback)
-#
-# if is_comet_available():
-#     from transformers.integrations import CometCallback
-#
-#     DEFAULT_CALLBACKS.append(CometCallback)
-#
-# if is_optuna_available():
-#     import optuna
-#
-# if is_ray_available():
-#     from ray import tune
-#
-# logger = logging.get_logger(__name__)
 
 _is_torch_generator_available = False
 _is_native_amp_available = False
@@ -307,15 +270,10 @@ class Trainer(transformers.Trainer):
         self.model = model.to(self.accelerator.device) if model is not None else None
         default_collator = default_data_collator if tokenizer is None else DataCollatorWithPadding(tokenizer)
         self.data_collator = data_collator if data_collator is not None else default_collator
-
-        #self.large_train_dataset = train_large_dataset
-        #np.random.shuffle(train_dataset.example_idx)
         self.train_dataset = train_dataset
         self.train_demo_dataset = train_demo_dataset
         self.un_train_dataset = un_train_dataset
-        # if self.args.use_last_epoch:
-        #     self.eval_dataset = train_dataset
-        # else:
+
         self.eval_dataset = eval_dataset
 
         self.tokenizer = tokenizer
@@ -539,21 +497,13 @@ class Trainer(transformers.Trainer):
             if not p.requires_grad:
                 continue
             update_parameter.append(n)
-
-
             if 'decoder' in n:
-
                 if self.model.data_args.task_name == 'mnli':
                     total_param += p.size(-1) * 3
                 else:
                     total_param += p.size(-1) * 2
             else:
                 total_param += p.numel()
-            print(n, p.numel())
-            #print(p.numel())
-
-
-
         print("Model parameters number is {}".format(total_param))
     def compute_loss(self, model, inputs, return_outputs=False):
         """
@@ -649,7 +599,7 @@ class Trainer(transformers.Trainer):
 
         return loss
 
-    def meta_st(self, model, un_inputs, sampling_step=1, epsilon=1e-6, learning_rate=None, use_soft_label=True):
+    def meta(self, model, un_inputs, sampling_step=1, epsilon=1e-6, learning_rate=None, use_soft_label=True):
 
         model.eval()
         opti_param = [p for p in model.parameters() if p.requires_grad]
@@ -663,13 +613,6 @@ class Trainer(transformers.Trainer):
             use_soft_label = self.args.soft_label
             #un_labels = un_inputs['labels']
 
-        # if self.args.fp16 and _use_native_amp:
-        #     self.scaler.scale(loss).backward()
-        # elif self.args.fp16 and _use_apex:
-        #     with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-        #         scaled_loss.backward()
-        # else:
-        #     loss.backward()
 
         for i in range(sampling_step):
             self.clear_memory()
@@ -678,16 +621,11 @@ class Trainer(transformers.Trainer):
             except:
                 self.meta_train_iter = self.meta_train_dataloader.__iter__()
                 meta_inputs = next(self.meta_train_iter)
-            #meta_inputs = self._prepare_inputs(meta_inputs)
 
             with higher.innerloop_ctx(
                     model, inner_opt, copy_initial_weights=True,
             ) as (fnet, diffopt):
 
-                # fnet.lm_model = self.accelerator.prepare_model(fnet.lm_model)
-                #diffopt = self.accelerator.prepare_optimizer(diffopt)
-
-                # un_inputs['reduction'] = False
 
                 un_outputs = fnet(**un_inputs)
                 un_logits = un_outputs[1]
@@ -742,10 +680,10 @@ class Trainer(transformers.Trainer):
     def pseudo_data_selection(self, model, un_inputs, un_meta, learning_rate=None, use_soft_label=None):
         loss_weight = None
 
-        if self.args.psuedo_selection_opt == "meta_st" and self.delta > self.meta_st_warmup_steps:
-            loss_weight = self.meta_st(model, un_inputs, sampling_step=self.args.sampling_steps, learning_rate=learning_rate, use_soft_label=use_soft_label)
+        if self.args.psuedo_selection_opt == "meta" and self.delta > self.meta_st_warmup_steps:
+            loss_weight = self.meta(model, un_inputs, sampling_step=self.args.sampling_steps, learning_rate=learning_rate, use_soft_label=use_soft_label)
 
-        elif self.args.psuedo_selection_opt == "confidence" or (self.delta < self.meta_st_warmup_steps and  self.args.psuedo_selection_opt == "meta_st"):
+        elif self.args.psuedo_selection_opt == "confidence" or (self.delta < self.meta_st_warmup_steps and  self.args.psuedo_selection_opt == "meta"):
             soft_labels = un_meta.get("soft_labels", None)
             mask = torch.max(soft_labels, dim=-1)[0] > self.args.confidence_thresh
             loss_weight = mask / (mask.sum() + 1e-5)
@@ -753,8 +691,6 @@ class Trainer(transformers.Trainer):
         return loss_weight
 
     def assign_psuedo_label(self, un_inputs, model=None, soft_label=None, fwd_type=None):
-
-
         if model is None:
             teacher_model = self.teacher_model.to(self.accelerator.device)
             teacher_model.eval()
@@ -860,8 +796,6 @@ class Trainer(transformers.Trainer):
             self.meta_train_num = int(percentage * len(self.meta_dataset.example_idx))
             self.meta_train_dataset.example_idx = self.meta_dataset.example_idx[:self.meta_train_num]
 
-
-
         return DataLoader(
             self.meta_train_dataset,
             batch_size=self.args.meta_train_batch_size,
@@ -929,7 +863,6 @@ class Trainer(transformers.Trainer):
         if inputs is not None:
             del inputs['labels']
         loss = 0
-        loss_weight=None
         un_meta = {}
         fwd_type = -1
         demo_inputs['fwd_type'] = fwd_type
@@ -942,14 +875,6 @@ class Trainer(transformers.Trainer):
         else:
             soft_labels, hard_labels = self.assign_psuedo_label(demo_inputs, model=model, soft_label=1)
             inputs['labels'] = soft_labels
-
-
-        # un_meta['soft_labels'] = soft_labels
-        # un_meta['hard_labels'] = hard_labels
-        # if self.args.soft_label == 1:
-        #     un_meta['pseudo_label'] = soft_labels
-        # else:
-        #     un_meta['pseudo_label'] = hard_labels
 
         model.train()
         un_meta['soft_labels'] = soft_labels
@@ -970,13 +895,6 @@ class Trainer(transformers.Trainer):
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
-        # if self.args.fp16 and _use_native_amp:
-        #     self.scaler.scale(loss).backward()
-        # elif self.args.fp16 and _use_apex:
-        #     with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-        #         scaled_loss.backward()
-        # else:
-        #    loss.backward()
         if isinstance(loss, int):
             return 0
         self.accelerator.backward(loss)
@@ -1002,13 +920,9 @@ class Trainer(transformers.Trainer):
         un_meta = {}
         model.train()
 
-        # if inputs is not None:
-        #     inputs = self._prepare_inputs(inputs)
-
         if un_inputs is not None:
 
             del un_inputs['labels']
-            #un_inputs = self._prepare_inputs(un_inputs)
         loss = 0
 
         if inputs is not None:
@@ -1059,13 +973,6 @@ class Trainer(transformers.Trainer):
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
-        # if self.args.fp16 and _use_native_amp:
-        #     self.scaler.scale(loss).backward()
-        # elif self.args.fp16 and _use_apex:
-        #     with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-        #         scaled_loss.backward()
-        # else:
-        #    loss.backward()
         if isinstance(loss, int):
             return 0
         self.accelerator.backward(loss)
@@ -1083,9 +990,6 @@ class Trainer(transformers.Trainer):
         else:
             if model_file is not None and os.path.exists(model_file):
                 logger.info('loading model from {}'.format(model_file))
-                # if self.args.n_gpu > 1:
-                #     self.teacher_model = torch.nn.DataParallel(self.teacher_model)
-
                 self.teacher_model.load_state_dict(torch.load(model_file))
 
 
@@ -1098,15 +1002,8 @@ class Trainer(transformers.Trainer):
         )
 
         if 'prompt' in self.teacher_model.model_args.few_shot_type:
-            # if config.model_type == 'roberta':
-            #     model_fn = RobertaForPromptFinetuning
-            # elif config.model_type == 'bert':
-            #     model_fn = BertForPromptFinetuning
-            # elif config.model_type =='deberta':
-            #     model_fn = DebertaForPromptFinetuning
             model_fn = LMForPromptFinetuning
-            # else:
-            #     raise NotImplementedError
+
         elif self.teacher_model.model_args.few_shot_type == 'finetune':
             model_fn = AutoModelForSequenceClassification
         else:
@@ -1151,10 +1048,6 @@ class Trainer(transformers.Trainer):
                         subparam.data = subparam.data.to(device)
                         if subparam._grad is not None:
                             subparam._grad.data = subparam._grad.data.to(device)
-
-
-
-  
 
 
     def train(self, model_path=None, dev_objective=None):
@@ -1217,14 +1110,6 @@ class Trainer(transformers.Trainer):
 
         self.meta_st_warmup_steps = int(self.args.meta_st_warmup * self.args.update_teacher_steps)
 
-        ######TEMP CHANGE
-        if self.args.freeze_encoder: # and not (self.args.psuedo_selection_opt == 'meta_st' and self.args.is_semi == 1):
-            logger.info("Freeze language model encoder")
-            self.model.freeze_lm_encoder()
-        ######TEMP CHANGE
-        if self.args.only_train_bias: # and not (self.args.psuedo_selection_opt == 'meta_st' and self.args.is_semi == 1):
-            logger.info("only finetune bias")
-            self.model.freeze_lm_finetune_bias()
 
         if self.args.update_k_layers != -1:
             self.model.freeeze_lm_k_layers(self.args.update_k_layers)
@@ -1257,7 +1142,6 @@ class Trainer(transformers.Trainer):
 
         un_train_dataloader = self.un_train_dataloader
         train_dataloader = self.train_dataloader
-        demo_train_dataloader = self.demo_train_dataloader
 
         self.meta_train_iter = self.meta_train_dataloader.__iter__()
 
@@ -1272,8 +1156,6 @@ class Trainer(transformers.Trainer):
                 torch.load(os.path.join(model_path, "optimizer.pt"), map_location=self.args.device)
             )
             self.lr_scheduler.load_state_dict(torch.load(os.path.join(model_path, "scheduler.pt")))
-
-
 
 
         # Train
@@ -1333,11 +1215,8 @@ class Trainer(transformers.Trainer):
         train_iterator = trange(
             epochs_trained, int(num_train_epochs), desc="Epoch"
         )
-        demo_train_iter = None
         demo_inputs=None
         session_num = 0
-
-
 
         for epoch in train_iterator:
             if isinstance(train_dataloader, DataLoader) and isinstance(train_dataloader.sampler, DistributedSampler):
@@ -1356,14 +1235,8 @@ class Trainer(transformers.Trainer):
             if args.past_index >= 0:
                 self._past = None
 
-            # steps_in_epoch = (
-            #     len(epoch_iterator) if train_dataset_is_sized else args.max_steps * args.gradient_accumulation_steps
-            # )
             self.control = self.callback_handler.on_epoch_begin(args, self.state, self.control)
             un_train_iter = None
-
-
-
 
             for step, inputs in enumerate(epoch_iterator):
                 delta = (self.global_step - self_training_start_iter)
@@ -1386,26 +1259,16 @@ class Trainer(transformers.Trainer):
                                         logger.info('loading model from {}'.format(model_file))
                                         self.model.load_state_dict(torch.load(model_file))
 
-                                # self.args.learning_rate = learning_rate
-                                output = self.evaluate()
-                                metrics = output.metrics
-                                objective = self.dev_objective(metrics)
-                                logger.info("Test result: {}".format(objective))
-
 
                             finetune = True
 
                             self.loss_alpha = 1
                         else:
-                            if delta == 0 and (self.args.semi_finetune or self.args.psuedo_selection_opt == 'meta_st'):
-                                if self.args.psuedo_selection_opt == 'meta_st':
-                                    logger.info("######### Start meta st #########")
+                            if delta == 0 and (self.args.semi_finetune or self.args.psuedo_selection_opt == 'meta'):
+                                if self.args.psuedo_selection_opt == 'meta':
+                                    logger.info("######### Start meta re-weighting #########")
 
                                 if self.args.use_last_epoch:
-                                    output = self.evaluate()
-                                    metrics = output.metrics
-                                    objective = self.dev_objective(metrics)
-                                    logger.info("Test result: {}".format(objective))
                                     self.save_model(self.args.output_dir)
                                 session_num += 1
                                 if session_num > self.args.self_training_session:
@@ -1418,7 +1281,7 @@ class Trainer(transformers.Trainer):
                         if self.args.use_psuedo_label > 0:
                             self.update_teacher(self.model)
 
-                        if self.args.re_init or self.args.psuedo_selection_opt == 'meta_st':
+                        if self.args.re_init or self.args.psuedo_selection_opt == 'meta':
 
                             logger.info('##### RE INIT MODEL #########')
                         
@@ -1446,19 +1309,9 @@ class Trainer(transformers.Trainer):
                             t_total = self_training_total_steps
                             self.create_optimizer_and_scheduler(num_training_steps=t_total, learning_rate=semi_learning_rate, warmup_steps=semi_warmup_steps, weight_decay=semi_weight_decay)
                             self.t_total = t_total
-                            #####
-                            #self.train_dataset = self.normal_train_dataset
                             self.train_dataloader = self.accelerator.prepare(self.get_train_dataloader())
                             epoch_iterator = self.train_dataloader
-                            #####
-                            # self.model.lm_model, self.optimizer = self.accelerator.prepare(
-                            #     self.model.lm_model, self.optimizer
-                            # )
-
                             self.model = self.model.to(self.accelerator.device)
-
-
-
 
                     if un_train_iter is None:
                         un_train_iter = un_train_dataloader.__iter__()
@@ -1526,32 +1379,13 @@ class Trainer(transformers.Trainer):
                     # BEGIN CHANGES.
                     # ----------------------------------------------------------------------
 
-                    if not finetune and self.global_step % self.args.eval_steps == 0:  ####temp change
-                        output = self.evaluate()
-                        metrics = output.metrics
-                        objective = self.dev_objective(metrics)
-                        logger.info("Test result: {}".format(objective))
-
-                    metrics = None
                     if self.args.use_last_epoch: # and not (self.args.semi_finetune and self.args.is_semi == 1):
                         continue
                     if self.global_step % self.args.eval_steps == 0:
-                        # if self.args.psuedo_selection_opt == 'meta_st' and \
-                        #     self.args.is_semi == 1 and not (finetune):
-                        #     output = self.evaluate(self.meta_valid_dataset)
-                        # elif self.args.semi_finetune and \
-                        #         self.args.is_semi == 1 and not (finetune):
-                        #     output = self.evaluate(self.train_dataset)
-                        # elif self.args.use_last_epoch:
-                        #     continue
-                        # else:
                         output = self.evaluate()
-
                         metrics = output.metrics
-
                         objective = self.dev_objective(metrics)
                         logger.info("Dev result: {}".format(objective))
-
 
                         if objective > self.objective:
                             logger.info("Best dev result: {}".format(objective))
@@ -1601,7 +1435,6 @@ class Trainer(transformers.Trainer):
 
         metrics = speed_metrics("train", start_time, self.state.max_steps)
         self.store_flos()
-        metrics["total_flos"] = self.state.total_flos
         self.log(metrics)
         self.control = self.callback_handler.on_train_end(args, self.state, self.control)
         # add remaining tr_loss

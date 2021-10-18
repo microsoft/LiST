@@ -137,26 +137,6 @@ class LMForPromptFinetuning(BertPreTrainedModel):
             self.init_adapter(std=self.model_args.adapter_init_std)
 
 
-
-        if self.model_args.prompt_encoder_type == "lstm":
-            modules = []
-            # modules.append(torch.nn.LSTM(input_size=self.hidden_size,
-            #                                hidden_size=self.hidden_size,
-            #                                num_layers=2,
-            #                                bidirectional=True,
-            #                                batch_first=True))
-            # modules.append(nn.Sequential(nn.Linear(2 * self.hidden_size, self.hidden_size),
-            #                               nn.ReLU(),
-            #                               nn.Linear(self.hidden_size, self.hidden_size)))
-            self.prompt_encoder = None
-
-        elif self.model_args.prompt_encoder_type == "mlp":
-            self.prompt_encoder = torch.nn.Sequential(
-                torch.nn.Linear(self.hidden_size, self.hidden_size),
-                torch.nn.ReLU(),
-                torch.nn.Linear(self.hidden_size, self.hidden_size))
-        else:
-            self.prompt_encoder = None
         self.prompt_encoder = None
         if self.data_args.continuous_prompt == 1:
             self.init_embedding()
@@ -175,12 +155,6 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
                         init_value += torch.normal(0, std, size=param.size())
                     param.copy_(init_value)
-                # if self.model_args.adapter_choice != 'lora':
-                #     pass
-                    # if 'adapter_proj_1' in name:
-                    #     #init_value = torch.normal(0, std, size=param.size())
-                    #     init_value = torch.eye(param.size(0)) + torch.normal(0, std, size=param.size())
-                    #     param.copy_(init_value)
 
 
 
@@ -422,14 +396,7 @@ class LMForPromptFinetuning(BertPreTrainedModel):
 
         replace_embeds = replace_embeds.unsqueeze(0)  # [batch_size, prompt_length, embed_size]
 
-        # if self.model_args.prompt_encoder_type == "lstm":
-        #     replace_embeds = self.lstm_head(replace_embeds)[0]  # [batch_size, seq_len, 2 * hidden_dim]
-        #     if self.prompt_length == 1:
-        #         replace_embeds = self.mlp_head(replace_embeds)
-        #     else:
-        #         replace_embeds = self.mlp_head(replace_embeds).squeeze()
-        #
-        # elif self.model_args.prompt_encoder_type == "mlp":
+
         if self.prompt_encoder is not None:
             replace_embeds = self.prompt_encoder(replace_embeds)
 
