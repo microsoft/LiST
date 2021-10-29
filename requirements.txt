@@ -1,8 +1,8 @@
 certifi==2020.12.5
 chardet==4.0.0
 click==7.1.2
-dataclasses==0.8
-#dataclasses==0.6
+#dataclasses==0.8
+dataclasses==0.6
 filelock==3.0.12
 flake8==3.8.4
 future==0.18.2
