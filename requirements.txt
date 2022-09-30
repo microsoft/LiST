@@ -9,7 +9,7 @@ future==0.18.2
 higher==0.2.1
 idna==2.10
 importlib-metadata==3.3.0
-joblib==1.0.0
+joblib==1.2.0
 mccabe==0.6.1
 numpy==1.19.4
 packaging==20.8
