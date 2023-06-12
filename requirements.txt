@@ -32,7 +32,7 @@ threadpoolctl==2.1.0
 tokenizers==0.9.2
 torch==1.6.0
 tqdm==4.48.2
-transformers==4.6.0
+transformers==4.30.0
 typing-extensions==3.7.4.3
 zipp==3.4.0
 accelerate==0.4.0
